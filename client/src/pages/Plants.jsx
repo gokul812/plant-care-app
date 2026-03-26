@@ -57,13 +57,19 @@ export default function Plants() {
     fetchPlants();
 
     // ✅ FIX: no duplicate add
-    socket.on("plant_added", () => {
-      fetchPlants();
-    });
+    socket.on("plant_added", (newPlant) => {
+  setPlants((prev) => {
+    // prevent duplicates
+    const exists = prev.some(p => p._id === newPlant._id);
+    if (exists) return prev;
 
-    socket.on("plant_deleted", () => {
-      fetchPlants();
-    });
+    return [newPlant, ...prev];
+  });
+});
+
+  socket.on("plant_deleted", (id) => {
+  setPlants((prev) => prev.filter(p => p._id !== id));
+});
 
     return () => {
       socket.off("plant_added");

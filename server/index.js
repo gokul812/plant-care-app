@@ -12,7 +12,6 @@ const app = express();
 const server = http.createServer(app);
 
 // ================= SOCKET.IO =================
-
 const io = new Server(server, {
   cors: {
     origin: [
@@ -22,7 +21,6 @@ const io = new Server(server, {
     methods: ["GET", "POST"],
     credentials: true,
   },
-  transports: ["websocket", "polling"],
 });
 
 app.set("io", io);
@@ -36,7 +34,6 @@ io.on("connection", (socket) => {
 });
 
 // ================= MIDDLEWARE =================
-
 app.use(express.json());
 
 app.use(
@@ -50,14 +47,12 @@ app.use(
 );
 
 // ================= DATABASE =================
-
 mongoose
   .connect(process.env.MONGO_URI)
   .then(() => console.log("✅ MongoDB connected"))
   .catch((err) => console.log("❌ DB Error:", err));
 
 // ================= MODELS =================
-
 const plantSchema = new mongoose.Schema({
   name: String,
   waterIn: String,
@@ -83,7 +78,7 @@ app.post("/signup", async (req, res) => {
     await User.create({ email, password: hashed });
 
     res.json({ message: "Signup successful" });
-  } catch (err) {
+  } catch {
     res.status(500).json({ message: "Server error" });
   }
 });
@@ -108,13 +103,12 @@ app.post("/login", async (req, res) => {
     );
 
     res.json({ token });
-  } catch (err) {
+  } catch {
     res.status(500).json({ message: "Server error" });
   }
 });
 
 // ================= AUTH MIDDLEWARE =================
-
 const authMiddleware = (req, res, next) => {
   const authHeader = req.headers.authorization;
 
@@ -148,19 +142,23 @@ app.get("/api/plants", authMiddleware, async (req, res) => {
 });
 
 // ADD plant
-app.post("/api/plants", async (req, res) => {
+app.post("/api/plants", authMiddleware, async (req, res) => {
   try {
-    const plant = new Plant(req.body);
-    await plant.save();
+    const plant = await Plant.create({
+      ...req.body,
+      userId: req.user.id,
+    });
 
-    // 🔥 ADD THIS (CRITICAL FIX)
-    console.log("🔥 Emitting plant_added:", plant);
+    // 🔥 REAL-TIME EMIT
+    io.emit("plant_added", plant);
+
+    // 🔔 Notification
     const notification = await Notification.create({
-  message: `🌱 ${plant.name} added`,
-});
+      message: `🌱 ${plant.name} added`,
+      read: false,
+    });
 
-// emit full notification
-io.emit("notification", notification);
+    io.emit("notification", notification);
 
     res.json(plant);
   } catch (err) {
@@ -169,20 +167,22 @@ io.emit("notification", notification);
 });
 
 // DELETE plant
-const plant = await Plant.findByIdAndDelete(req.params.id);
-
-const notification = await Notification.create({
-  message: `🗑️ ${plant.name} deleted`,
-});
-
-io.emit("notification", notification);
-
 app.delete("/api/plants/:id", authMiddleware, async (req, res) => {
   try {
-    await Plant.findByIdAndDelete(req.params.id);
+    const plant = await Plant.findByIdAndDelete(req.params.id);
 
-    const io = req.app.get("io");
+    // 🔥 EMIT DELETE
     io.emit("plant_deleted", req.params.id);
+
+    // 🔔 Notification
+    if (plant) {
+      const notification = await Notification.create({
+        message: `🗑️ ${plant.name} deleted`,
+        read: false,
+      });
+
+      io.emit("notification", notification);
+    }
 
     res.json({ success: true });
   } catch {
@@ -205,8 +205,10 @@ app.put("/api/plants/:id", authMiddleware, async (req, res) => {
   }
 });
 
-// GET notification
-aapp.get("/api/notifications", async (req, res) => {
+// ================= NOTIFICATIONS =================
+
+// GET notifications
+app.get("/api/notifications", async (req, res) => {
   try {
     const data = await Notification.find().sort({ createdAt: -1 });
     res.json(data);
@@ -218,7 +220,9 @@ aapp.get("/api/notifications", async (req, res) => {
 // mark as read
 app.put("/api/notifications/:id", async (req, res) => {
   try {
-    await Notification.findByIdAndUpdate(req.params.id, { read: true });
+    await Notification.findByIdAndUpdate(req.params.id, {
+      read: true,
+    });
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -226,13 +230,11 @@ app.put("/api/notifications/:id", async (req, res) => {
 });
 
 // ================= TEST =================
-
 app.get("/", (req, res) => {
   res.send("API is running 🚀");
 });
 
 // ================= START SERVER =================
-
 const PORT = process.env.PORT || 5000;
 
 server.listen(PORT, () => {
