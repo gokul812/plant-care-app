@@ -1,24 +1,19 @@
 import { Outlet, NavLink, useNavigate } from "react-router-dom";
-import { LayoutDashboard, Leaf, Settings, Bell } from "lucide-react";
-import { useState, useEffect } from "react";
+import { LayoutDashboard, Leaf, Settings } from "lucide-react";
 import Notifications from "./Notifications";
 
 export default function Layout() {
   const navigate = useNavigate();
 
-  // 🔔 Notification state
-  const [notifications, setNotifications] = useState([]);
-  const [open, setOpen] = useState(false);
-
-  useEffect(() => {
-    const data =
-      JSON.parse(localStorage.getItem("notifications")) || [];
-    setNotifications(data);
-  }, []);
-
   // 🚪 Logout
   const handleLogout = () => {
     localStorage.removeItem("token");
+
+    // optional: disconnect socket
+    import("../socket").then(({ socket }) => {
+      socket.disconnect();
+    });
+
     navigate("/login");
   };
 
@@ -84,7 +79,7 @@ export default function Layout() {
         {/* LOGOUT */}
         <button
           onClick={handleLogout}
-          className="bg-red-500 text-white px-3 py-2 rounded mt-6"
+          className="bg-red-500 text-white px-3 py-2 rounded mt-6 hover:bg-red-600 transition"
         >
           Logout
         </button>
@@ -95,46 +90,12 @@ export default function Layout() {
 
         {/* TOP BAR */}
         <div className="flex justify-end mb-4">
-
-          {/* NOTIFICATIONS */}
-          <div className="relative">
-
-            <button onClick={() => setOpen(!open)}>
-              <Bell />
-            </button>
-
-            {notifications.length > 0 && (
-              <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs px-2 rounded-full">
-                {notifications.length}
-              </span>
-            )}
-
-            {/* DROPDOWN */}
-            {open && (
-              <div className="absolute right-0 mt-2 w-64 bg-white shadow-lg rounded p-3 z-50">
-                <h4 className="font-semibold mb-2">Notifications</h4>
-
-                {notifications.map((n, i) => (
-                  <p key={i} className="text-sm text-gray-600 mb-1">
-                    {n.msg}
-                  </p>
-                ))}
-
-                {notifications.length === 0 && (
-                  <p className="text-sm text-gray-400">
-                    No notifications
-                  </p>
-                )}
-              </div>
-            )}
-          </div>
-
+          <Notifications />
         </div>
 
-        {/* ROUTES RENDER HERE */}
+        {/* PAGE CONTENT */}
         <Outlet />
       </div>
-
     </div>
   );
 }
