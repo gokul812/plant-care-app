@@ -6,35 +6,55 @@ export default function App() {
   const [plants, setPlants] = useState([]);
   const [name, setName] = useState("");
   const [waterIn, setWaterIn] = useState("");
+  const [loading, setLoading] = useState(true);
 
   const API = import.meta.env.VITE_API_URL;
+  const navigate = useNavigate();
 
-  const fetchPlants = async () => {
-    const res = await fetch(`${API}/plants`);
-    const data = await res.json();
-    setPlants(data);
-  };
-
+  // 🔐 Redirect if not logged in
   useEffect(() => {
-    fetchPlants();
+    const token = localStorage.getItem("token");
+    if (!token) {
+      navigate("/login");
+    } else {
+      fetchPlants();
+    }
   }, []);
 
-const navigate = useNavigate();
+  // 🌱 Fetch plants (FIXED)
+  const fetchPlants = async () => {
+    try {
+      const res = await fetch(`${API}/plants`, {
+        headers: {
+          Authorization: localStorage.getItem("token"),
+        },
+      });
 
-useEffect(() => {
-  const token = localStorage.getItem("token");
-  if (!token) {
-    navigate("/login");
-  }
-}, []);
+      const data = await res.json();
 
+      if (Array.isArray(data)) {
+        setPlants(data);
+      } else {
+        console.log("Error:", data);
+        setPlants([]);
+      }
+    } catch (err) {
+      console.log(err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  // ➕ Add plant (FIXED)
   const addPlant = async () => {
     if (!name || !waterIn) return;
 
     await fetch(`${API}/plants`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: localStorage.getItem("token"),
+      },
       body: JSON.stringify({ name, waterIn }),
     });
 
@@ -42,18 +62,23 @@ useEffect(() => {
     setWaterIn("");
     fetchPlants();
   };
-  
-  fetch(`${API}/plants`, {
-  headers: {
-    Authorization: localStorage.getItem("token"),
-  },
-});
 
+  // ❌ Delete plant (FIXED)
   const deletePlant = async (id) => {
     await fetch(`${API}/plants/${id}`, {
       method: "DELETE",
+      headers: {
+        Authorization: localStorage.getItem("token"),
+      },
     });
+
     fetchPlants();
+  };
+
+  // 🚪 Logout
+  const logout = () => {
+    localStorage.removeItem("token");
+    navigate("/login");
   };
 
   return (
@@ -66,7 +91,7 @@ useEffect(() => {
         </h2>
 
         <nav className="mt-10 space-y-4">
-          <p className="text-gray-800 font-medium cursor-pointer">Dashboard</p>
+          <p className="text-gray-800 font-medium">Dashboard</p>
           <p className="text-gray-500 hover:text-green-600 cursor-pointer">Plants</p>
           <p className="text-gray-500 hover:text-green-600 cursor-pointer">Settings</p>
         </nav>
@@ -84,19 +109,16 @@ useEffect(() => {
             <div className="w-9 h-9 bg-gray-300 rounded-full"></div>
 
             <button
-  onClick={() => {
-    localStorage.removeItem("token");
-    window.location.href = "/login";
-  }}
-  className="text-sm bg-red-500 text-white px-3 py-1 rounded"
->
-  Logout
-</button>
+              onClick={logout}
+              className="text-sm bg-red-500 text-white px-3 py-1 rounded"
+            >
+              Logout
+            </button>
           </div>
         </div>
 
         {/* Add Plant */}
-        <div className="bg-white p-6 rounded-xl shadow mb-8 transition hover:shadow-lg">
+        <div className="bg-white p-6 rounded-xl shadow mb-8 hover:shadow-lg">
           <h3 className="font-semibold mb-4 flex items-center gap-2">
             <Plus size={18}/> Add New Plant
           </h3>
@@ -124,7 +146,9 @@ useEffect(() => {
         </div>
 
         {/* Plants */}
-        {plants.length === 0 ? (
+        {loading ? (
+          <p>Loading...</p>
+        ) : plants.length === 0 ? (
           <div className="text-center text-gray-500 mt-20">
             <Leaf size={40} className="mx-auto mb-3 opacity-50"/>
             <p>No plants yet</p>
