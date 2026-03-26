@@ -4,6 +4,8 @@ import { useEffect } from "react";
 
 export default function Layout() {
   const navigate = useNavigate();
+  const [notifications, setNotifications] = useState([]);
+  const [showNotif, setShowNotif] = useState(false);
 
   // 🔐 Protect routes
   useEffect(() => {
@@ -22,7 +24,7 @@ export default function Layout() {
       {/* Sidebar */}
       <aside className="w-64 bg-white shadow-lg p-6">
         <h2 className="text-xl font-bold text-green-600 flex items-center gap-2 mb-8">
-          <Leaf size={20}/> Plant SaaS
+          <Leaf size={20}/> Plant Care
         </h2>
 
         <nav className="flex flex-col gap-4">
