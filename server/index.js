@@ -1,6 +1,9 @@
 import express from "express";
 import mongoose from "mongoose";
 import cors from "cors";
+import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
+import User from "./models/User.js";
 
 const app = express();
 app.use(cors());
@@ -52,6 +55,57 @@ app.put("/plants/:id", async (req, res) => {
     { new: true }
   );
   res.json(updated);
+});
+
+app.post("/signup", async (req, res) => {
+  const { email, password } = req.body;
+
+  const hashed = await bcrypt.hash(password, 10);
+
+  const user = await User.create({
+    email,
+    password: hashed,
+  });
+
+  res.json(user);
+});
+
+app.post("/login", async (req, res) => {
+  const { email, password } = req.body;
+
+  const user = await User.findOne({ email });
+
+  if (!user) return res.status(400).json({ message: "User not found" });
+
+  const isMatch = await bcrypt.compare(password, user.password);
+
+  if (!isMatch) return res.status(400).json({ message: "Wrong password" });
+
+  const token = jwt.sign(
+    { id: user._id },
+    process.env.JWT_SECRET
+  );
+
+  res.json({ token });
+});
+
+const authMiddleware = (req, res, next) => {
+  const token = req.headers.authorization;
+
+  if (!token) return res.status(401).json({ message: "No token" });
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    req.user = decoded;
+    next();
+  } catch {
+    res.status(401).json({ message: "Invalid token" });
+  }
+};
+
+app.get("/plants", authMiddleware, async (req, res) => {
+  const plants = await Plant.find();
+  res.json(plants);
 });
 
 // Test route
