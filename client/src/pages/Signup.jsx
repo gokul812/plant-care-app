@@ -1,23 +1,36 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 export default function Signup() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const navigate = useNavigate();
 
- const API = import.meta.env.VITE_API_URL;
+  const API = import.meta.env.VITE_API_URL;
 
-const handleSignup = async () => {
-  await fetch(`${API}/signup`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ email, password }),
-  });
+  const handleSignup = async () => {
+    try {
+      const res = await fetch(`${API}/signup`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email, password }),
+      });
 
-  window.location.href = "/login";
-};
+      const data = await res.json();
+
+      if (res.ok) {
+        alert("Signup successful!");
+        navigate("/login");
+      } else {
+        alert(data.message || "Signup failed");
+      }
+    } catch (err) {
+      console.log(err);
+      alert("Server error");
+    }
+  };
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-100">
@@ -25,7 +38,7 @@ const handleSignup = async () => {
         <h2 className="text-xl font-bold mb-6 text-center">Signup</h2>
 
         <input
-          className="border p-2 w-full mb-3 rounded"
+          className="border p-2 w-full mb-3 rounded focus:outline-none focus:ring-2 focus:ring-green-400"
           placeholder="Email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
@@ -33,7 +46,7 @@ const handleSignup = async () => {
 
         <input
           type="password"
-          className="border p-2 w-full mb-4 rounded"
+          className="border p-2 w-full mb-4 rounded focus:outline-none focus:ring-2 focus:ring-green-400"
           placeholder="Password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
@@ -45,13 +58,13 @@ const handleSignup = async () => {
         >
           Signup
         </button>
-    <p className="text-sm mt-4 text-center">
-  Already have an account?{" "}
-  <a href="/login" className="text-green-600 cursor-pointer">
-    Login
-  </a>
-</p>
-   
+
+        <p className="text-sm mt-4 text-center">
+          Already have an account?{" "}
+          <Link to="/login" className="text-green-600 font-medium">
+            Login
+          </Link>
+        </p>
       </div>
     </div>
   );
