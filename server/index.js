@@ -137,19 +137,30 @@ app.put("/plants/:id", authMiddleware, async (req, res) => {
 
 // ======== notification =========
 
+const http = require("http");
+const { Server } = require("socket.io");
+
+const app = require("./app"); // or your express app
+const server = http.createServer(app);
+
 const io = new Server(server, {
   cors: {
     origin: "*",
   },
 });
 
-io.on("connection", (socket) => {
-  console.log("User connected");
+// ✅ Make io globally accessible
+app.set("io", io);
 
-  socket.on("newPlant", (data) => {
-    io.emit("plantAdded", newPlant);
+io.on("connection", (socket) => {
+  console.log("⚡ User connected:", socket.id);
+
+  socket.on("disconnect", () => {
+    console.log("❌ User disconnected:", socket.id);
   });
 });
+
+module.exports = server;
 
 // ================= TEST =================
 

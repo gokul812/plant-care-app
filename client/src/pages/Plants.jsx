@@ -1,216 +1,164 @@
 import { useEffect, useState } from "react";
-import { io } from "socket.io-client";
+import { socket } from "../socket"; // make sure this file exists
 
-
-export default function Plants() {
+const Plants = () => {
   const [plants, setPlants] = useState([]);
   const [name, setName] = useState("");
   const [waterIn, setWaterIn] = useState("");
+  const [loading, setLoading] = useState(true);
 
-  // ✏️ Edit states
-  const [editingPlant, setEditingPlant] = useState(null);
-  const [editName, setEditName] = useState("");
-  const [editWater, setEditWater] = useState("");
-  const socket = io(import.meta.env.VITE_API_URL);
+  const token = localStorage.getItem("token");
 
-  const API = import.meta.env.VITE_API_URL;
+  // ✅ Correct API URL (works in production)
+  const API_URL = import.meta.env.VITE_API_URL;
 
-  // 🌱 Fetch plants
-  const fetchPlants = async () => {
-    try {
-      const res = await fetch(`${API}/plants`, {
-        headers: {
-          Authorization: localStorage.getItem("token"),
-        },
+  // 🔄 Fetch plants from backend
+  const fetchPlants = () => {
+    fetch(`${API_URL}/api/plants`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (Array.isArray(data)) {
+          setPlants(data);
+        } else {
+          setPlants([]);
+        }
+        setLoading(false);
+      })
+      .catch((err) => {
+        console.error("Error fetching plants:", err);
+        setLoading(false);
       });
-
-      const data = await res.json();
-
-      if (Array.isArray(data)) {
-        setPlants(data);
-      } else {
-        console.log("Error:", data);
-        setPlants([]);
-      }
-    } catch (err) {
-      console.log(err);
-    }
   };
 
   useEffect(() => {
     fetchPlants();
+
+    // 🔔 SOCKET LISTENERS (PRO ARCHITECTURE)
+    socket.on("plantAdded", (newPlant) => {
+      setPlants((prev) => [newPlant, ...prev]);
+    });
+
+    socket.on("plantDeleted", (id) => {
+      setPlants((prev) => prev.filter((p) => p._id !== id));
+    });
+
+    return () => {
+      socket.off("plantAdded");
+      socket.off("plantDeleted");
+    };
   }, []);
 
-  // 🔔 Generate notifications
-  useEffect(() => {
-    const reminders = plants.map((p) => ({
-      msg: `💧 Water ${p.name} in ${p.waterIn}`,
-    }));
+  // ➕ Add Plant
+  const addPlant = () => {
+    if (!name || !waterIn) {
+      alert("Please fill all fields");
+      return;
+    }
 
-    localStorage.setItem("notifications", JSON.stringify(reminders));
-  }, [plants]);
-
-  // ➕ Add plant
-
-const addPlant = async () => {
-  if (!name) return;
-
-  const smartWater = getSmartWatering(name);
-
-  await fetch(`${API}/plants`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: localStorage.getItem("token"),
-    },
-    body: JSON.stringify({
-      name,
-      waterIn: smartWater,
-    }),
-  });
-  socket.emit("newPlant", { name, waterIn });
-  setName("");
-  fetchPlants();
-};
-  
-
-  // ❌ Delete plant
-  const deletePlant = async (id) => {
-    await fetch(`${API}/plants/${id}`, {
-      method: "DELETE",
-      headers: {
-        Authorization: localStorage.getItem("token"),
-      },
-    });
-
-    fetchPlants();
-  };
-
-  // ✏️ Open edit modal
-  const openEdit = (plant) => {
-    setEditingPlant(plant);
-    setEditName(plant.name);
-    setEditWater(plant.waterIn);
-  };
-
-  // ✏️ Update plant
-  const updatePlant = async () => {
-    await fetch(`${API}/plants/${editingPlant._id}`, {
-      method: "PUT",
+    fetch(`${API_URL}/api/plants`, {
+      method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: localStorage.getItem("token"),
+        Authorization: `Bearer ${token}`,
       },
-      body: JSON.stringify({
-        name: editName,
-        waterIn: editWater,
-      }),
-    });
+      body: JSON.stringify({ name, waterIn }),
+    })
+      .then((res) => res.json())
+      .then(() => {
+        setName("");
+        setWaterIn("");
 
-    setEditingPlant(null);
-    fetchPlants();
+        // ❌ No socket.emit here (backend handles it)
+      })
+      .catch((err) => console.error("Error adding plant:", err));
   };
 
-  const getSmartWatering = (name) => {
-  if (name.toLowerCase().includes("cactus")) return "7 days";
-  if (name.toLowerCase().includes("rose")) return "2 days";
-  if (name.toLowerCase().includes("fern")) return "1 day";
+  // ❌ Delete Plant
+  const deletePlant = (id) => {
+    fetch(`${API_URL}/api/plants/${id}`, {
+      method: "DELETE",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }).catch((err) => console.error("Error deleting plant:", err));
+  };
 
-  return "3 days"; // default AI logic
-};
+  if (loading) {
+    return <p className="p-6">Loading plants...</p>;
+  }
 
   return (
-    <div>
+    <div className="p-6">
+      <h1 className="text-2xl font-semibold mb-6">🌱 Your Plants</h1>
 
-      <h2 className="text-lg font-semibold mb-4">🌱 Your Plants</h2>
-
-      {/* Add Plant */}
-      <div className="flex gap-2 mb-6">
+      {/* ➕ ADD PLANT FORM */}
+      <div className="flex flex-col md:flex-row gap-3 mb-6">
         <input
+          type="text"
           placeholder="Plant name"
-          className="border p-2 rounded w-full"
           value={name}
           onChange={(e) => setName(e.target.value)}
+          className="border p-2 rounded w-full"
         />
 
         <input
-          placeholder="Water in"
-          className="border p-2 rounded w-full"
+          type="text"
+          placeholder="Water in (e.g. 2 days)"
           value={waterIn}
           onChange={(e) => setWaterIn(e.target.value)}
+          className="border p-2 rounded w-full"
         />
 
         <button
           onClick={addPlant}
-          className="bg-green-500 text-white px-4 rounded"
+          className="bg-green-600 text-white px-4 py-2 rounded"
         >
           Add
         </button>
       </div>
 
-      {/* Plant List */}
-      <div className="grid md:grid-cols-3 gap-4">
-        {plants.map((plant) => (
-          <div key={plant._id} className="bg-white p-4 rounded shadow">
-            <h3 className="font-semibold">{plant.name}</h3>
-            <p className="text-gray-500">💧 {plant.waterIn}</p>
+      {/* 🌿 PLANT LIST */}
+      {plants.length === 0 ? (
+        <p className="text-gray-500">
+          No plants added yet. Start growing 🌱
+        </p>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {plants.map((plant) => (
+            <div
+              key={plant._id}
+              className="bg-white p-4 rounded-2xl shadow"
+            >
+              <h2 className="font-semibold text-lg">
+                {plant.name}
+              </h2>
 
-            <div className="flex gap-3 mt-3">
-              <button
-                onClick={() => openEdit(plant)}
-                className="text-blue-500 text-sm"
-              >
-                Edit
-              </button>
+              <p className="text-gray-500">
+                💧 {plant.waterIn}
+              </p>
 
-              <button
-                onClick={() => deletePlant(plant._id)}
-                className="text-red-500 text-sm"
-              >
-                Delete
-              </button>
+              <div className="flex gap-3 mt-3">
+                <button className="text-blue-500 text-sm">
+                  Edit
+                </button>
+
+                <button
+                  onClick={() => deletePlant(plant._id)}
+                  className="text-red-500 text-sm"
+                >
+                  Delete
+                </button>
+              </div>
             </div>
-          </div>
-        ))}
-      </div>
-
-      {/* ✏️ Edit Modal */}
-      {editingPlant && (
-        <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center">
-          <div className="bg-white p-6 rounded shadow w-80">
-            <h3 className="font-bold mb-4">Edit Plant</h3>
-
-            <input
-              value={editName}
-              onChange={(e) => setEditName(e.target.value)}
-              className="border p-2 w-full mb-3"
-            />
-
-            <input
-              value={editWater}
-              onChange={(e) => setEditWater(e.target.value)}
-              className="border p-2 w-full mb-4"
-            />
-
-            <div className="flex justify-between">
-              <button
-                onClick={updatePlant}
-                className="bg-green-500 text-white px-3 py-1 rounded"
-              >
-                Save
-              </button>
-
-              <button
-                onClick={() => setEditingPlant(null)}
-                className="text-gray-500"
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
+          ))}
         </div>
       )}
-
     </div>
   );
-}
+};
+
+export default Plants;

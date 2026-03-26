@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { socket } from "../socket";
 import {
   PieChart,
   Pie,
@@ -16,8 +17,10 @@ const Dashboard = () => {
 
   const token = localStorage.getItem("token");
 
+  const API_URL = import.meta.env.VITE_API_URL;
+
   useEffect(() => {
-    fetch("http://localhost:5000/api/plants", {
+    fetch(`${API_URL}/api/plants`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -57,6 +60,21 @@ const Dashboard = () => {
   const total = plants.length;
   const watered = plants.filter((p) => p.watered).length;
   const needsWater = total - watered;
+
+  useEffect(() => {
+  socket.on("plantAdded", (newPlant) => {
+    setPlants((prev) => [newPlant, ...prev]);
+  });
+
+  socket.on("plantDeleted", (id) => {
+    setPlants((prev) => prev.filter((p) => p._id !== id));
+  });
+
+  return () => {
+    socket.off("plantAdded");
+    socket.off("plantDeleted");
+  };
+}, []);
 
   // 🧠 Smart Insight
   let insight = "";
