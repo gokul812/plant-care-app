@@ -9,7 +9,7 @@ app.use(express.json());
 app.use(cors({
   origin: [
     "http://localhost:5173",
-    "https://plant-care-app-kappa.vercel.app/"
+    "https://plant-care-app-zefq.vercel.app"
   ]
 }));
 
