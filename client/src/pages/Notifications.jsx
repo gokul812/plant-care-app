@@ -43,12 +43,19 @@ export default function Notifications() {
     socket.on("notification", (notif) => {
       console.log("🔔 NEW:", notif);
 
-      setNotifications((prev) => [notif, ...prev]);
+      setNotifications((prev) => {
+
+      if (prev.find((n) => n._id === notif._id)) return prev;
+      return [notif, ...prev];
+      });
       playSound(); // 🔊 play sound
     });
 
+  socket.off("notification"); // 🔥 important
+  socket.on("notification", handler);
+
     return () => {
-      socket.off("notification");
+      socket.off("notification", handler);
     };
   }, []);
 

@@ -169,6 +169,8 @@ io.emit("notification", notification);
 });
 
 // DELETE plant
+const plant = await Plant.findByIdAndDelete(req.params.id);
+
 const notification = await Notification.create({
   message: `🗑️ ${plant.name} deleted`,
 });

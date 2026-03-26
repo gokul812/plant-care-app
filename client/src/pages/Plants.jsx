@@ -66,45 +66,39 @@ export default function Plants() {
 
   // ➕ ADD
   const addPlant = async () => {
-    try {
-      if (!name || !waterIn) return alert("Fill all fields");
+  const res = await fetch(`${API_URL}/api/plants`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({
+      name,
+      waterIn: days,
+    }),
+  });
 
-      const token = localStorage.getItem("token");
+  await res.json();
 
-      const res = await fetch(`${API}/api/plants`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ name, waterIn }),
-      });
+  // ✅ ALWAYS REFETCH INSTEAD OF MANUAL PUSH
+  fetchPlants();
 
-      const data = await res.json();
-
-      if (res.ok) {
-        setPlants((prev) => [data, ...prev]);
-        setName("");
-        setWaterIn("");
-      }
-    } catch (err) {
-      console.error(err);
-    }
-  };
+  setName("");
+  setDays("");
+};
 
   // ❌ DELETE
   const deletePlant = async (id) => {
-    const token = localStorage.getItem("token");
+  await fetch(`${API_URL}/api/plants/${id}`, {
+    method: "DELETE",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
 
-    await fetch(`${API}/api/plants/${id}`, {
-      method: "DELETE",
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-
-    setPlants((prev) => prev.filter((p) => p._id !== id));
-  };
+  // ✅ refetch instead of filter
+  fetchPlants();
+};
 
   // ✏️ UPDATE
   const updatePlant = async () => {
