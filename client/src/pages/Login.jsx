@@ -1,18 +1,92 @@
-const handleLogin = async () => {
-  const res = await fetch(`${API_URL}/api/auth/login`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ email, password }),
-  });
+import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 
-  const data = await res.json();
+export default function Login() {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
 
-  localStorage.setItem("token", data.token);
+  const API = import.meta.env.VITE_API_URL;
 
-  // 🔥 IMPORTANT
-  import("../socket").then(({ socket }) => {
-    socket.connect();
-  });
+  // ✅ Redirect if already logged in
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      window.location.href = "/";
+    }
+  }, []);
 
-  navigate("/");
-};
+  // ✅ CLEAN & SAFE LOGIN FUNCTION
+  const handleLogin = async () => {
+    try {
+      if (!email || !password) {
+        alert("Please fill all fields");
+        return;
+      }
+
+      const res = await fetch(`${API}/login`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await res.json();
+
+      console.log("LOGIN RESPONSE:", data);
+
+      if (data?.token) {
+        // ✅ Save token
+        localStorage.setItem("token", data.token);
+
+        import("../socket").then(({ socket }) => {
+  socket.connect();
+});
+
+window.location.href = "/";
+      } else {
+        alert(data?.message || "Login failed");
+      }
+    } catch (err) {
+      console.error("Login error:", err);
+      alert("Server error");
+    }
+  };
+
+  return (
+    <div className="flex items-center justify-center min-h-screen bg-gray-100">
+      <div className="bg-white p-8 rounded-xl shadow w-80">
+        <h2 className="text-xl font-bold mb-6 text-center">Login</h2>
+
+        <input
+          className="border p-2 w-full mb-3 rounded focus:outline-none focus:ring-2 focus:ring-green-400"
+          placeholder="Email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+        />
+
+        <input
+          type="password"
+          className="border p-2 w-full mb-4 rounded focus:outline-none focus:ring-2 focus:ring-green-400"
+          placeholder="Password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+        />
+
+        <button
+          onClick={handleLogin}
+          className="bg-green-500 text-white w-full py-2 rounded hover:bg-green-600"
+        >
+          Login
+        </button>
+
+        <p className="text-sm mt-4 text-center">
+          Don’t have an account?{" "}
+          <Link to="/signup" className="text-green-600 font-medium">
+            Signup
+          </Link>
+        </p>
+      </div>
+    </div>
+  );
+}
