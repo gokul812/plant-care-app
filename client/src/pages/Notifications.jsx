@@ -37,27 +37,26 @@ export default function Notifications() {
     setNotifications(data);
   };
 
-  useEffect(() => {
-    fetchNotifications();
+ useEffect(() => {
+  const handleNotification = (notif) => {
+    console.log("🔔 NEW:", notif);
 
-    socket.on("notification", (notif) => {
-      console.log("🔔 NEW:", notif);
-
-      setNotifications((prev) => {
-
+    setNotifications((prev) => {
       if (prev.find((n) => n._id === notif._id)) return prev;
       return [notif, ...prev];
-      });
-      playSound(); // 🔊 play sound
     });
 
-  socket.off("notification"); // 🔥 important
-  socket.on("notification", handler);
+    const audio = new Audio("/notify.mp3");
+    audio.play();
+  };
 
-    return () => {
-      socket.off("notification", handler);
-    };
-  }, []);
+  socket.off("notification"); // clear old
+  socket.on("notification", handleNotification);
+
+  return () => {
+    socket.off("notification", handleNotification);
+  };
+}, []);
 
   // ✅ mark as read
   const markAsRead = async (id) => {

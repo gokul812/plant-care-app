@@ -205,18 +205,24 @@ app.put("/api/plants/:id", authMiddleware, async (req, res) => {
   }
 });
 
-// GET ALL
-app.get("/api/notifications", async (req, res) => {
-  const data = await Notification.find().sort({ createdAt: -1 });
-  res.json(data);
+// GET notification
+aapp.get("/api/notifications", async (req, res) => {
+  try {
+    const data = await Notification.find().sort({ createdAt: -1 });
+    res.json(data);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
 });
 
-// MARK AS READ
+// mark as read
 app.put("/api/notifications/:id", async (req, res) => {
-  await Notification.findByIdAndUpdate(req.params.id, {
-    read: true,
-  });
-  res.json({ success: true });
+  try {
+    await Notification.findByIdAndUpdate(req.params.id, { read: true });
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
 });
 
 // ================= TEST =================
