@@ -25,27 +25,42 @@ export default function Layout() {
           <Leaf size={20}/> Plant SaaS
         </h2>
 
-        <nav className="space-y-4">
+        <nav className="flex flex-col gap-4">
 
-          <NavLink to="/" className={({ isActive }) =>
-            isActive ? "text-green-600 font-semibold" : "text-gray-500"
-          }>
-            Dashboard
-          </NavLink>
+  <NavLink
+    to="/"
+    className={({ isActive }) =>
+      isActive
+        ? "text-green-600 font-semibold"
+        : "text-gray-500 hover:text-green-600"
+    }
+  >
+    Dashboard
+  </NavLink>
 
-          <NavLink to="/plants" className={({ isActive }) =>
-            isActive ? "text-green-600 font-semibold" : "text-gray-500"
-          }>
-            Plants
-          </NavLink>
+  <NavLink
+    to="/plants"
+    className={({ isActive }) =>
+      isActive
+        ? "text-green-600 font-semibold"
+        : "text-gray-500 hover:text-green-600"
+    }
+  >
+    Plants
+  </NavLink>
 
-          <NavLink to="/settings" className={({ isActive }) =>
-            isActive ? "text-green-600 font-semibold" : "text-gray-500"
-          }>
-            Settings
-          </NavLink>
+  <NavLink
+    to="/settings"
+    className={({ isActive }) =>
+      isActive
+        ? "text-green-600 font-semibold"
+        : "text-gray-500 hover:text-green-600"
+    }
+  >
+    Settings
+  </NavLink>
 
-        </nav>
+</nav>
       </aside>
 
       {/* Main */}
