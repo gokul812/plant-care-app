@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Trash2, Plus, Leaf, Bell } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Link } from "react-router-dom";
+import { NavLink } from "react-router-dom";
 
 export default function App() {
   const [plants, setPlants] = useState([]);
@@ -91,11 +92,39 @@ export default function App() {
           <Leaf size={20}/> Plant SaaS
         </h2>
 
-        <nav className="mt-10 space-y-4">
-          <p className="text-gray-800 font-medium">Dashboard</p>
-          <p className="text-gray-500 hover:text-green-600 cursor-pointer">Plants</p>
-          <p className="text-gray-500 hover:text-green-600 cursor-pointer">Settings</p>
-        </nav>
+<NavLink
+  to="/plants"
+  className={({ isActive }) =>
+    isActive
+      ? "text-green-600 font-semibold"
+      : "text-gray-500 hover:text-green-600"
+  }
+>
+  Dashboard
+</NavLink>
+
+  <NavLink
+  to="/plants"
+  className={({ isActive }) =>
+    isActive
+      ? "text-green-600 font-semibold"
+      : "text-gray-500 hover:text-green-600"
+  }
+>
+  Plants
+</NavLink>
+
+ <NavLink
+  to="/plants"
+  className={({ isActive }) =>
+    isActive
+      ? "text-green-600 font-semibold"
+      : "text-gray-500 hover:text-green-600"
+  }
+>
+Setting
+</NavLink>
+
       </aside>
 
       {/* Main */}
