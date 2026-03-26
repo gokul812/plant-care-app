@@ -1,6 +1,6 @@
 import { Outlet, NavLink, useNavigate } from "react-router-dom";
 import { Leaf, Bell } from "lucide-react";
-import { useEffect } from "react";
+import { useState, useEffect } from "react";
 
 export default function Layout() {
   const navigate = useNavigate();
