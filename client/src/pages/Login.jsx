@@ -39,8 +39,11 @@ export default function Login() {
         // ✅ Save token
         localStorage.setItem("token", data.token);
 
-        // ✅ Force reload (ensures token is available everywhere)
-        window.location.href = "/";
+        import("../socket").then(({ socket }) => {
+  socket.connect();
+});
+
+window.location.href = "/";
       } else {
         alert(data?.message || "Login failed");
       }
