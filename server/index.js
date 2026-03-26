@@ -5,7 +5,7 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import http from "http";
 import { Server } from "socket.io";
-
+import Notification from "./models/Notification.js";
 import User from "./models/User.js";
 
 const app = express();
@@ -155,7 +155,12 @@ app.post("/api/plants", async (req, res) => {
 
     // 🔥 ADD THIS (CRITICAL FIX)
     console.log("🔥 Emitting plant_added:", plant);
-    io.emit("plant_added", plant);
+    const notification = await Notification.create({
+  message: `🌱 ${plant.name} added`,
+});
+
+// emit full notification
+io.emit("notification", notification);
 
     res.json(plant);
   } catch (err) {
@@ -164,6 +169,12 @@ app.post("/api/plants", async (req, res) => {
 });
 
 // DELETE plant
+const notification = await Notification.create({
+  message: `🗑️ ${plant.name} deleted`,
+});
+
+io.emit("notification", notification);
+
 app.delete("/api/plants/:id", authMiddleware, async (req, res) => {
   try {
     await Plant.findByIdAndDelete(req.params.id);
@@ -190,6 +201,20 @@ app.put("/api/plants/:id", authMiddleware, async (req, res) => {
   } catch {
     res.status(500).json({ message: "Error updating plant" });
   }
+});
+
+// GET ALL
+app.get("/api/notifications", async (req, res) => {
+  const data = await Notification.find().sort({ createdAt: -1 });
+  res.json(data);
+});
+
+// MARK AS READ
+app.put("/api/notifications/:id", async (req, res) => {
+  await Notification.findByIdAndUpdate(req.params.id, {
+    read: true,
+  });
+  res.json({ success: true });
 });
 
 // ================= TEST =================
