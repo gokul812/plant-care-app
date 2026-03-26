@@ -8,11 +8,7 @@ export default function Plants() {
   const [name, setName] = useState("");
   const [waterIn, setWaterIn] = useState("");
   const [loading, setLoading] = useState(true);
-
-  // ✅ FIX: missing state
   const [editingPlant, setEditingPlant] = useState(null);
-
-  const API = import.meta.env.VITE_API_URL;
 
   // 🌿 FETCH PLANTS
   const fetchPlants = async () => {
@@ -24,7 +20,7 @@ export default function Plants() {
         return;
       }
 
-      const res = await fetch(`${API}/api/plants`, {
+      const res = await fetch(`${API_URL}/plants`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -49,6 +45,7 @@ export default function Plants() {
     }
   };
 
+  // 🔌 SOCKET + INITIAL LOAD
   useEffect(() => {
     const cached = localStorage.getItem("plants");
 
@@ -59,70 +56,78 @@ export default function Plants() {
 
     fetchPlants();
 
-    socket.on("plant_added", (newPlant) => {
-      setPlants((prev) => [newPlant, ...prev]);
+    // ✅ FIX: no duplicate add
+    socket.on("plant_added", () => {
+      fetchPlants();
     });
 
-    return () => socket.off("plant_added");
+    socket.on("plant_deleted", () => {
+      fetchPlants();
+    });
+
+    return () => {
+      socket.off("plant_added");
+      socket.off("plant_deleted");
+    };
   }, []);
 
-  // ➕ ADD
- const addPlant = async () => {
-  if (!name || !waterInDays) return;
+  // ➕ ADD PLANT
+  const addPlant = async () => {
+    if (!name || !waterIn) return;
 
-  const token = localStorage.getItem("token");
+    const token = localStorage.getItem("token");
 
-  const res = await fetch(`${API_URL}/plants`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify({
-      name,
-      waterInDays,
-    }),
-  });
+    await fetch(`${API_URL}/plants`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        name,
+        waterInDays: waterIn, // ✅ FIX
+      }),
+    });
 
-  await res.json();
-  fetchPlants(); // refresh
-};
+    setName("");
+    setWaterIn("");
+
+    fetchPlants(); // ✅ refresh
+  };
 
   // ❌ DELETE
   const deletePlant = async (id) => {
-
     const token = localStorage.getItem("token");
-  await fetch(`${API_URL}/api/plants/${id}`, {
-    method: "DELETE",
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
 
-  // ✅ refetch instead of filter
-  fetchPlants();
-};
+    await fetch(`${API_URL}/plants/${id}`, {
+      method: "DELETE",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    fetchPlants(); // ✅ refresh
+  };
 
   // ✏️ UPDATE
   const updatePlant = async () => {
     const token = localStorage.getItem("token");
 
-    const res = await fetch(`${API}/api/plants/${editingPlant._id}`, {
+    const res = await fetch(`${API_URL}/plants/${editingPlant._id}`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${token}`,
       },
-      body: JSON.stringify(editingPlant),
+      body: JSON.stringify({
+        name: editingPlant.name,
+        waterInDays: editingPlant.waterIn, // ✅ FIX
+      }),
     });
 
-    const data = await res.json();
-
     if (res.ok) {
-      setPlants((prev) =>
-        prev.map((p) => (p._id === data._id ? data : p))
-      );
       setEditingPlant(null);
+      fetchPlants();
     }
   };
 
@@ -147,12 +152,14 @@ export default function Plants() {
           value={name}
           onChange={(e) => setName(e.target.value)}
         />
+
         <input
           className="border p-2 rounded w-full"
           placeholder="Water in days"
           value={waterIn}
           onChange={(e) => setWaterIn(e.target.value)}
         />
+
         <button
           onClick={addPlant}
           className="bg-green-500 text-white px-4 rounded hover:bg-green-600"
@@ -171,7 +178,7 @@ export default function Plants() {
             <h3 className="font-semibold text-lg">{plant.name}</h3>
 
             <p className="text-gray-500 mb-3">
-              💧 {plant.waterIn} days
+              💧 {plant.waterInDays} days
             </p>
 
             <div className="flex justify-between">
