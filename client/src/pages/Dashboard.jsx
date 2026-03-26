@@ -1,184 +1,157 @@
 import { useEffect, useState } from "react";
 import { socket } from "../socket";
 import {
-  PieChart,
-  Pie,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
   Tooltip,
-  Cell,
   ResponsiveContainer,
 } from "recharts";
 
-const COLORS = ["#22c55e", "#ef4444"];
-
-const Dashboard = () => {
+export default function Dashboard() {
   const [plants, setPlants] = useState([]);
-  const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const token = localStorage.getItem("token");
+  const API = import.meta.env.VITE_API_URL;
 
-  if (!token) {
-  window.location.href = "/login";
-  return;
-}
+  // 🔥 FETCH DATA (SAFE + CACHE)
+  const fetchPlants = async () => {
+    try {
+      const token = localStorage.getItem("token");
 
-  const API_URL = import.meta.env.VITE_API_URL;
+      if (!token) {
+        window.location.href = "/login";
+        return;
+      }
 
-   useEffect(() => {
-  const token = localStorage.getItem("token");
+      const res = await fetch(`${API}/api/plants`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
-  if (!token) {
-    window.location.href = "/login";
-    return;
-  }
-
-  fetch(`${API_URL}/api/plants`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  })
-    .then((res) => {
       if (res.status === 401) {
         localStorage.removeItem("token");
         window.location.href = "/login";
         return;
       }
-      return res.json();
-    })
-    .then((plants) => {
-      if (!Array.isArray(plants)) return;
 
-      setPlants(plants);
+      const data = await res.json();
 
-      const total = plants.length;
-      const watered = 0; // adjust later
+      if (Array.isArray(data)) {
+        setPlants(data);
 
-      setData([
-        { name: "Watered", value: watered },
-        { name: "Needs Water", value: total - watered },
-      ]);
-    })
-    .catch((err) => console.error(err));
-}, []);
-
-  if (loading) {
-    return <p className="p-6">Loading dashboard...</p>;
-  }
-
-  const total = plants.length;
-  const watered = plants.filter((p) => p.watered).length;
-  const needsWater = total - watered;
-
-  useEffect(() => {
-  socket.on("plantAdded", (newPlant) => {
-    setPlants((prev) => [newPlant, ...prev]);
-  });
-
-  socket.on("plantDeleted", (id) => {
-    setPlants((prev) => prev.filter((p) => p._id !== id));
-  });
-
-  return () => {
-    socket.off("plantAdded");
-    socket.off("plantDeleted");
+        // ✅ cache
+        localStorage.setItem("plants", JSON.stringify(data));
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
   };
-}, []);
 
-  // 🧠 Smart Insight
-  let insight = "";
-  if (total === 0) {
-    insight = "Start by adding your first plant 🌱";
-  } else if (watered === total) {
-    insight = "All plants are well maintained 🌿";
-  } else if (watered < total / 2) {
-    insight = "Many plants need watering ⚠️";
-  } else {
-    insight = "You're doing great! Keep it up 💪";
+  // 🚀 INITIAL LOAD (USE CACHE FIRST)
+  useEffect(() => {
+    const cached = localStorage.getItem("plants");
+
+    if (cached) {
+      setPlants(JSON.parse(cached));
+      setLoading(false);
+    }
+
+    fetchPlants();
+
+    // 🔔 SOCKET LIVE UPDATE
+    socket.on("plant_added", (newPlant) => {
+      setPlants((prev) => [newPlant, ...prev]);
+    });
+
+    return () => {
+      socket.off("plant_added");
+    };
+  }, []);
+
+  // 📊 CALCULATIONS
+  const totalPlants = plants.length;
+
+  const watered = plants.filter((p) => {
+    return Number(p.waterIn) <= 1;
+  }).length;
+
+  const needsWater = totalPlants - watered;
+
+  const chartData = [
+    { name: "Watered", value: watered },
+    { name: "Needs Water", value: needsWater },
+  ];
+
+  // ⏳ LOADING UI
+  if (loading) {
+    return (
+      <div className="text-center mt-10 text-gray-500 animate-pulse">
+        Loading dashboard 📊...
+      </div>
+    );
   }
 
   return (
     <div className="p-6">
-      <h1 className="text-2xl font-semibold mb-6">Dashboard 📊</h1>
+      <h2 className="text-2xl font-semibold mb-6">Dashboard 📊</h2>
 
-      {/* ✅ STAT CARDS */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-        <div className="bg-white p-4 rounded-2xl shadow">
-          <h2 className="text-gray-500">Total Plants</h2>
-          <p className="text-2xl font-bold">{total}</p>
+      {/* 🔥 STATS CARDS */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <div className="bg-white p-4 rounded shadow text-center">
+          <h3 className="text-gray-500">Total Plants</h3>
+          <p className="text-2xl font-bold">{totalPlants}</p>
         </div>
 
-        <div className="bg-white p-4 rounded-2xl shadow">
-          <h2 className="text-gray-500">Watered</h2>
-          <p className="text-2xl font-bold text-green-600">
-            {watered}
-          </p>
+        <div className="bg-white p-4 rounded shadow text-center">
+          <h3 className="text-gray-500">Watered</h3>
+          <p className="text-2xl font-bold text-green-500">{watered}</p>
         </div>
 
-        <div className="bg-white p-4 rounded-2xl shadow">
-          <h2 className="text-gray-500">Needs Water</h2>
-          <p className="text-2xl font-bold text-red-500">
-            {needsWater}
-          </p>
+        <div className="bg-white p-4 rounded shadow text-center">
+          <h3 className="text-gray-500">Needs Water</h3>
+          <p className="text-2xl font-bold text-red-500">{needsWater}</p>
         </div>
       </div>
 
-      {/* 📊 PIE CHART */}
-      <div className="bg-white p-6 rounded-2xl shadow mb-6">
-        <h2 className="mb-4 font-semibold">Plant Status</h2>
+      {/* 📊 CHART */}
+      <div className="bg-white p-4 rounded shadow">
+        <h3 className="mb-4 font-medium">Plant Status</h3>
 
-        <div style={{ width: "100%", height: 300 }}>
-          <ResponsiveContainer>
-            <PieChart>
-              <Pie
-                data={data}
-                dataKey="value"
-                nameKey="name"
-                outerRadius={100}
-                label
-              >
-                {data.map((entry, index) => (
-                  <Cell key={index} fill={COLORS[index % COLORS.length]} />
-                ))}
-              </Pie>
+        {totalPlants === 0 ? (
+          <p className="text-gray-400 text-center">
+            Add plants to see analytics 🌱
+          </p>
+        ) : (
+          <ResponsiveContainer width="100%" height={300}>
+            <BarChart data={chartData}>
+              <XAxis dataKey="name" />
+              <YAxis />
               <Tooltip />
-            </PieChart>
+              <Bar dataKey="value" />
+            </BarChart>
           </ResponsiveContainer>
-        </div>
+        )}
       </div>
 
-      {/* 🤖 SMART INSIGHT */}
-      <div className="bg-green-100 p-4 rounded-xl mb-6">
-        <p className="font-medium">{insight}</p>
-      </div>
-
-      {/* 🔔 RECENT ACTIVITY */}
-      <div className="bg-white p-4 rounded-2xl shadow">
-        <h2 className="font-semibold mb-3">Recent Activity</h2>
+      {/* 📌 RECENT ACTIVITY */}
+      <div className="bg-white p-4 rounded shadow mt-6">
+        <h3 className="mb-2 font-medium">Recent Activity</h3>
 
         {plants.length === 0 ? (
-          <p className="text-gray-500">No plants added yet</p>
+          <p className="text-gray-400">No plants yet</p>
         ) : (
-          plants.slice(0, 5).map((plant) => (
-            <div
-              key={plant._id}
-              className="flex justify-between py-2 border-b"
-            >
-              <span>{plant.name}</span>
-              <span
-                className={`text-sm ${
-                  plant.watered
-                    ? "text-green-600"
-                    : "text-red-500"
-                }`}
-              >
-                {plant.watered ? "Watered" : "Pending"}
-              </span>
-            </div>
-          ))
+          <ul className="text-sm text-gray-600">
+            {plants.slice(0, 5).map((p) => (
+              <li key={p._id}>🌿 Added {p.name}</li>
+            ))}
+          </ul>
         )}
       </div>
     </div>
   );
-};
-
-export default Dashboard;
+}
