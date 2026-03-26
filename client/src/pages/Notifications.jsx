@@ -12,7 +12,7 @@ export default function Notifications() {
   });
 
   socket.on("plant_added", (plant) => {
-    console.log("🔥 RECEIVED:", plant);
+    console.log("🔥 RECEIVED EVENT:", plant);
 
     const newNotif = {
       id: Date.now(),
@@ -22,9 +22,10 @@ export default function Notifications() {
     setNotifications((prev) => [newNotif, ...prev]);
   });
 
-  return () => socket.off("plant_added");
+  return () => {
+    socket.off("plant_added");
+  };
 }, []);
-
   return (
     <div className="relative">
       {/* 🔔 BELL */}

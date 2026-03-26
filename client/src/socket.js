@@ -2,23 +2,20 @@ import { io } from "socket.io-client";
 
 const URL = import.meta.env.VITE_API_URL;
 
-// ❌ prevent auto connect
 export const socket = io(URL, {
   autoConnect: false,
-  transports: ["websocket"],
-  reconnection: true,
-  reconnectionAttempts: 5,
-  reconnectionDelay: 2000,
+  transports: ["websocket", "polling"], // 🔥 IMPORTANT FIX
+  withCredentials: true,
 });
 
-// ✅ CONNECT ONLY IF LOGGED IN
+// connect only if logged in
 if (localStorage.getItem("token")) {
   socket.connect();
 }
 
-// 🔍 DEBUG (optional but useful)
+// debug
 socket.on("connect", () => {
-  console.log("✅ Socket connected");
+  console.log("✅ Socket connected:", socket.id);
 });
 
 socket.on("connect_error", (err) => {

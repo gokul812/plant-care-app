@@ -86,7 +86,6 @@ export default function Plants() {
         setPlants((prev) => [data, ...prev]);
         setName("");
         setWaterIn("");
-        socket.emit("plant_added", data);
       }
     } catch (err) {
       console.error(err);
