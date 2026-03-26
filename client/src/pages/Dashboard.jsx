@@ -7,6 +7,8 @@ import {
   YAxis,
   Tooltip,
   ResponsiveContainer,
+  CartesianGrid,
+  Cell,
 } from "recharts";
 
 export default function Dashboard() {
@@ -76,9 +78,7 @@ export default function Dashboard() {
   // 📊 CALCULATIONS
   const totalPlants = plants.length;
 
-  const watered = plants.filter((p) => {
-    return Number(p.waterIn) <= 1;
-  }).length;
+  const watered = plants.filter(p => Number(p.waterIn) <= 1).length;
 
   const needsWater = totalPlants - watered;
 
@@ -128,13 +128,41 @@ export default function Dashboard() {
           </p>
         ) : (
           <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={chartData}>
-              <XAxis dataKey="name" />
-              <YAxis />
-              <Tooltip />
-              <Bar dataKey="value" />
-            </BarChart>
-          </ResponsiveContainer>
+  <BarChart
+    data={chartData}
+    margin={{ top: 20, right: 20, left: 0, bottom: 5 }}
+  >
+    {/* GRID */}
+    <CartesianGrid strokeDasharray="3 3" />
+
+    {/* AXIS */}
+    <XAxis dataKey="name" />
+    <YAxis allowDecimals={false} />
+
+    {/* TOOLTIP */}
+    <Tooltip
+      contentStyle={{
+        backgroundColor: "#fff",
+        borderRadius: "10px",
+        border: "1px solid #eee",
+      }}
+    />
+
+    {/* BARS */}
+    <Bar
+      dataKey="value"
+      radius={[10, 10, 0, 0]}
+      barSize={60}
+    >
+      {chartData.map((entry, index) => (
+        <Cell
+          key={`cell-${index}`}
+          fill={entry.name === "Watered" ? "#22c55e" : "#ef4444"}
+        />
+      ))}
+    </Bar>
+  </BarChart>
+</ResponsiveContainer>
         )}
       </div>
 
