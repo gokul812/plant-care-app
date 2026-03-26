@@ -1,53 +1,54 @@
 import { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 
 export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const navigate = useNavigate();
 
   const API = import.meta.env.VITE_API_URL;
 
-
-
-  // Redirect if already logged in
+  // ✅ Redirect if already logged in
   useEffect(() => {
     const token = localStorage.getItem("token");
-    if (data.token) {
-  localStorage.setItem("token", data.token);
-
-  // ✅ Force reload to ensure token is ready everywhere
-  window.location.href = "/";
-}
+    if (token) {
+      window.location.href = "/";
+    }
   }, []);
 
+  // ✅ CLEAN & SAFE LOGIN FUNCTION
   const handleLogin = async () => {
-  try {
-    const res = await fetch(`${API}/login`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ email, password }),
-    });
+    try {
+      if (!email || !password) {
+        alert("Please fill all fields");
+        return;
+      }
 
-    const data = await res.json();
+      const res = await fetch(`${API}/login`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email, password }),
+      });
 
-    console.log("LOGIN RESPONSE:", data); // ✅ safe debug
+      const data = await res.json();
 
-    if (data?.token) {
-      localStorage.setItem("token", data.token);
+      console.log("LOGIN RESPONSE:", data);
 
-      // ✅ force reload (better than navigate)
-      window.location.href = "/";
-    } else {
-      alert(data?.message || "Login failed");
+      if (data?.token) {
+        // ✅ Save token
+        localStorage.setItem("token", data.token);
+
+        // ✅ Force reload (ensures token is available everywhere)
+        window.location.href = "/";
+      } else {
+        alert(data?.message || "Login failed");
+      }
+    } catch (err) {
+      console.error("Login error:", err);
+      alert("Server error");
     }
-  } catch (err) {
-    console.error("Login error:", err);
-    alert("Server error");
-  }
-};
+  };
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-100">
