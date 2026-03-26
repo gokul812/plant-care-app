@@ -3,32 +3,65 @@ import mongoose from "mongoose";
 import cors from "cors";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import User from "./models/User.js";
+import http from "http";
 import { Server } from "socket.io";
+
+import User from "./models/User.js";
 
 const app = express();
 
-// Middleware
-app.use(express.json());
-app.use(cors({
-  origin: [
-    "http://localhost:5173",
-    "https://plant-care-app-zefq.vercel.app"
-  ]
-}));
+// ✅ Create HTTP server (IMPORTANT)
+const server = http.createServer(app);
 
-// MongoDB
-mongoose.connect(process.env.MONGO_URI)
-  .then(() => console.log("MongoDB connected"))
-  .catch(err => console.log(err));
+// ================= SOCKET.IO =================
+
+const io = new Server(server, {
+  cors: {
+    origin: [
+      "http://localhost:5173",
+      "https://plant-care-app-zefq.vercel.app",
+    ],
+  },
+  transports: ["websocket", "polling"], // ✅ FIX for Render
+});
+
+// Make io available everywhere
+app.set("io", io);
+
+io.on("connection", (socket) => {
+  console.log("⚡ User connected:", socket.id);
+
+  socket.on("disconnect", () => {
+    console.log("❌ User disconnected:", socket.id);
+  });
+});
+
+// ================= MIDDLEWARE =================
+
+app.use(express.json());
+
+app.use(
+  cors({
+    origin: [
+      "http://localhost:5173",
+      "https://plant-care-app-zefq.vercel.app",
+    ],
+  })
+);
+
+// ================= DATABASE =================
+
+mongoose
+  .connect(process.env.MONGO_URI)
+  .then(() => console.log("✅ MongoDB connected"))
+  .catch((err) => console.log(err));
 
 // ================= MODELS =================
 
-// Plant Schema
 const plantSchema = new mongoose.Schema({
   name: String,
   waterIn: String,
-  userId: String, // for multi-user
+  userId: String,
 });
 
 const Plant = mongoose.model("Plant", plantSchema);
@@ -53,9 +86,7 @@ app.post("/signup", async (req, res) => {
     });
 
     res.json({ message: "Signup successful" });
-
   } catch (err) {
-    console.log(err);
     res.status(500).json({ message: "Server error" });
   }
 });
@@ -71,7 +102,8 @@ app.post("/login", async (req, res) => {
 
     const isMatch = await bcrypt.compare(password, user.password);
 
-    if (!isMatch) return res.status(400).json({ message: "Wrong password" });
+    if (!isMatch)
+      return res.status(400).json({ message: "Wrong password" });
 
     const token = jwt.sign(
       { id: user._id },
@@ -79,9 +111,7 @@ app.post("/login", async (req, res) => {
     );
 
     res.json({ token });
-
   } catch (err) {
-    console.log(err);
     res.status(500).json({ message: "Server error" });
   }
 });
@@ -102,76 +132,59 @@ const authMiddleware = (req, res, next) => {
   }
 };
 
-// ================= PLANTS (PROTECTED) =================
+// ================= PLANTS =================
 
-// GET plants (user-specific)
-app.get("/plants", authMiddleware, async (req, res) => {
+// GET plants
+app.get("/api/plants", authMiddleware, async (req, res) => {
   const plants = await Plant.find({ userId: req.user.id });
   res.json(plants);
 });
 
 // ADD plant
-app.post("/plants", authMiddleware, async (req, res) => {
+app.post("/api/plants", authMiddleware, async (req, res) => {
   const plant = await Plant.create({
     ...req.body,
     userId: req.user.id,
   });
+
+  // ✅ SOCKET EMIT (PRO WAY)
+  const io = req.app.get("io");
+  io.emit("plantAdded", plant);
+
   res.json(plant);
 });
 
 // DELETE plant
-app.delete("/plants/:id", authMiddleware, async (req, res) => {
+app.delete("/api/plants/:id", authMiddleware, async (req, res) => {
   await Plant.findByIdAndDelete(req.params.id);
+
+  const io = req.app.get("io");
+  io.emit("plantDeleted", req.params.id);
+
   res.json({ success: true });
 });
 
 // UPDATE plant
-app.put("/plants/:id", authMiddleware, async (req, res) => {
+app.put("/api/plants/:id", authMiddleware, async (req, res) => {
   const updated = await Plant.findByIdAndUpdate(
     req.params.id,
     req.body,
     { new: true }
   );
+
   res.json(updated);
 });
-
-// ======== notification =========
-
-const http = require("http");
-const { Server } = require("socket.io");
-
-const app = require("./app"); // or your express app
-const server = http.createServer(app);
-
-const io = new Server(server, {
-  cors: {
-    origin: "*",
-  },
-});
-
-// ✅ Make io globally accessible
-app.set("io", io);
-
-io.on("connection", (socket) => {
-  console.log("⚡ User connected:", socket.id);
-
-  socket.on("disconnect", () => {
-    console.log("❌ User disconnected:", socket.id);
-  });
-});
-
-module.exports = server;
 
 // ================= TEST =================
 
 app.get("/", (req, res) => {
-  res.send("API is running");
+  res.send("API is running 🚀");
 });
 
-// ================= SERVER =================
+// ================= START SERVER =================
 
 const PORT = process.env.PORT || 5000;
 
-app.listen(PORT, () => {
-  console.log("Server running on port " + PORT);
+server.listen(PORT, () => {
+  console.log("🚀 Server running on port " + PORT);
 });
