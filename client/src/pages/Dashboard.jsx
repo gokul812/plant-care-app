@@ -11,7 +11,7 @@ import { useEffect, useState } from "react";
 
 export default function Dashboard() {
   const [data, setData] = useState([]);
-
+  const [loading, setLoading] = useState(true);
   const API = import.meta.env.VITE_API_URL;
 
   useEffect(() => {
@@ -27,15 +27,22 @@ export default function Dashboard() {
         const total = plants.length;
 
         const watered = plants.filter(
-          (p) => p.waterIn === "today"
-        ).length;
+            (p) => new Date(p.lastWatered).toDateString() === today
+                ).length;
 
         setData([
-          { name: "Plants", count: total },
-          { name: "Watered", count: watered },
+          { name: "Plants", value: total },
+          { name: "Watered", value: watered },
+          { name: "Needs Water", value: total - watered },
         ]);
       });
   }, []);
+if (loading) return <p>Loading...</p>;
+  if (data.length === 0) {
+  return <p>No data available</p>;
+}
+
+
 
   return (
     <div className="w-full">
