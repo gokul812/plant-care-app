@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 
 export default function Signup() {
   const [email, setEmail] = useState("");
@@ -44,6 +45,13 @@ const handleSignup = async () => {
         >
           Signup
         </button>
+    <p className="text-sm mt-4 text-center">
+  Already have an account?{" "}
+  <a href="/login" className="text-green-600 cursor-pointer">
+    Login
+  </a>
+</p>
+   
       </div>
     </div>
   );

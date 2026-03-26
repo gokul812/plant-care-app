@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -14,6 +15,13 @@ const handleLogin = async () => {
     },
     body: JSON.stringify({ email, password }),
   });
+
+  useEffect(() => {
+  const token = localStorage.getItem("token");
+  if (token) {
+    navigate("/");
+  }
+}, []);
 
   const data = await res.json();
 
@@ -51,6 +59,11 @@ const handleLogin = async () => {
         >
           Login
         </button>
+
+        <p className="text-sm mt-4 text-center">
+  Don't have an account?{" "}
+ <Link to="/signup">Signup</Link>
+</p>
       </div>
     </div>
   );
