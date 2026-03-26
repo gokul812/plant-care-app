@@ -17,12 +17,9 @@ const server = http.createServer(app);
 
 const io = new Server(server, {
   cors: {
-    origin: [
-      "http://localhost:5173",
-      "https://plant-care-app-zefq.vercel.app",
-    ],
+    origin: "*",
   },
-  transports: ["websocket", "polling"], // ✅ FIX for Render
+  transports: ["websocket", "polling"],
 });
 
 // Make io available everywhere
@@ -140,14 +137,12 @@ app.get("/api/plants", authMiddleware, async (req, res) => {
   res.json(plants);
 });
 
-// ADD plant
 app.post("/api/plants", authMiddleware, async (req, res) => {
   const plant = await Plant.create({
     ...req.body,
     userId: req.user.id,
   });
 
-  // ✅ SOCKET EMIT (PRO WAY)
   const io = req.app.get("io");
   io.emit("plantAdded", plant);
 
