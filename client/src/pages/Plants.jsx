@@ -91,7 +91,7 @@ export default function Plants() {
       },
       body: JSON.stringify({
         name,
-        waterInDays: waterIn, // ✅ FIX
+        waterIn, // ✅ FIX
       }),
     });
 
@@ -127,7 +127,7 @@ export default function Plants() {
       },
       body: JSON.stringify({
         name: editingPlant.name,
-        waterInDays: editingPlant.waterIn, // ✅ FIX
+        waterIn: editingPlant.waterIn, // ✅ FIX
       }),
     });
 
@@ -184,7 +184,7 @@ export default function Plants() {
             <h3 className="font-semibold text-lg">{plant.name}</h3>
 
             <p className="text-gray-500 mb-3">
-              💧 {plant.waterInDays} days
+              💧 {plant.waterIn} days
             </p>
 
             <div className="flex justify-between">
