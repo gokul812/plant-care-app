@@ -25,16 +25,24 @@ export default function Dashboard() {
 
         {/* IMPORTANT FIX */}
         <div className="w-full h-[300px]">
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={data}>
-              <CartesianGrid stroke="#e5e7eb" />
-              <XAxis dataKey="name" stroke="#6b7280" />
-              <YAxis stroke="#6b7280" />
-              <Tooltip />
-              <Bar dataKey="count" fill="#22c55e" radius={[6, 6, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
+  <ResponsiveContainer width="100%" height="100%">
+    <BarChart
+      data={data}
+      margin={{ top: 10, right: 30, left: 0, bottom: 5 }}
+    >
+      <CartesianGrid strokeDasharray="3 3" />
+      <XAxis dataKey="name" />
+      <YAxis />
+      <Tooltip />
+      <Bar
+        dataKey="count"
+        fill="#22c55e"
+        barSize={50}
+        radius={[10, 10, 0, 0]}
+      />
+    </BarChart>
+  </ResponsiveContainer>
+</div>
 
       </div>
     </div>
