@@ -1,92 +1,77 @@
 import { Outlet, NavLink, useNavigate } from "react-router-dom";
-import { Leaf, Bell } from "lucide-react";
+import { NavLink } from "react-router-dom";
+import { LayoutDashboard, Leaf, Settings } from "lucide-react";
+import Notifications from "./Notifications";
 import { useState, useEffect } from "react";
 
-export default function Layout() {
-  const navigate = useNavigate();
-  const [notifications, setNotifications] = useState([]);
-  const [showNotif, setShowNotif] = useState(false);
-
-  // 🔐 Protect routes
-  useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (!token) navigate("/login");
-  }, []);
-
-  const logout = () => {
-    localStorage.removeItem("token");
-    navigate("/login");
-  };
-
+export default function Layout({ children }) {
   return (
-    <div className="flex min-h-screen bg-gray-100">
+    <div className="flex h-screen bg-gray-100">
 
       {/* Sidebar */}
-      <aside className="w-64 bg-white shadow-lg p-6">
-        <h2 className="text-xl font-bold text-green-600 flex items-center gap-2 mb-8">
-          <Leaf size={20}/> Plant Care
-        </h2>
+      <div className="w-64 bg-white shadow-md p-5">
 
-        <nav className="flex flex-col gap-4">
+        <h1 className="text-xl font-bold mb-6 text-green-600">
+          🌿 Plant Care
+        </h1>
 
-  <NavLink
-    to="/"
-    className={({ isActive }) =>
-      isActive
-        ? "text-green-600 font-semibold"
-        : "text-gray-500 hover:text-green-600"
-    }
-  >
-    Dashboard
-  </NavLink>
+        <div className="flex justify-end gap-4 mb-4">
+  <Notifications />
 
-  <NavLink
-    to="/plants"
-    className={({ isActive }) =>
-      isActive
-        ? "text-green-600 font-semibold"
-        : "text-gray-500 hover:text-green-600"
-    }
-  >
-    Plants
-  </NavLink>
+  <button className="bg-red-500 text-white px-3 py-1 rounded">
+    Logout
+  </button>
+</div>
 
-  <NavLink
-    to="/settings"
-    className={({ isActive }) =>
-      isActive
-        ? "text-green-600 font-semibold"
-        : "text-gray-500 hover:text-green-600"
-    }
-  >
-    Settings
-  </NavLink>
+        <nav className="space-y-3">
 
-</nav>
-      </aside>
+          <NavLink
+            to="/"
+            className={({ isActive }) =>
+              `flex items-center gap-2 p-2 rounded ${
+                isActive
+                  ? "bg-green-100 text-green-600 font-semibold"
+                  : "text-gray-600 hover:bg-gray-100"
+              }`
+            }
+          >
+            <LayoutDashboard size={18} />
+            Dashboard
+          </NavLink>
 
-      {/* Main */}
-      <main className="flex-1 p-8">
+          <NavLink
+            to="/plants"
+            className={({ isActive }) =>
+              `flex items-center gap-2 p-2 rounded ${
+                isActive
+                  ? "bg-green-100 text-green-600 font-semibold"
+                  : "text-gray-600 hover:bg-gray-100"
+              }`
+            }
+          >
+            <Leaf size={18} />
+            Plants
+          </NavLink>
 
-        {/* Topbar */}
-        <div className="flex justify-between mb-8">
-          <h1 className="text-2xl font-bold">Dashboard</h1>
+          <NavLink
+            to="/settings"
+            className={({ isActive }) =>
+              `flex items-center gap-2 p-2 rounded ${
+                isActive
+                  ? "bg-green-100 text-green-600 font-semibold"
+                  : "text-gray-600 hover:bg-gray-100"
+              }`
+            }
+          >
+            <Settings size={18} />
+            Settings
+          </NavLink>
 
-          <div className="flex gap-4 items-center">
-            <Bell />
-            <button
-              onClick={logout}
-              className="bg-red-500 text-white px-3 py-1 rounded"
-            >
-              Logout
-            </button>
-          </div>
-        </div>
+        </nav>
+      </div>
 
-        {/* Dynamic Pages */}
-        <Outlet />
-
-      </main>
+      {/* Content */}
+      <div className="flex-1 p-6">{children}</div>
     </div>
   );
 }
