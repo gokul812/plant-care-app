@@ -7,9 +7,12 @@ export default function Plants() {
   const [waterIn, setWaterIn] = useState("");
   const [loading, setLoading] = useState(true);
 
+  // ✅ FIX: missing state
+  const [editingPlant, setEditingPlant] = useState(null);
+
   const API = import.meta.env.VITE_API_URL;
 
-  // 🌿 FETCH PLANTS (SAFE + CACHE)
+  // 🌿 FETCH PLANTS
   const fetchPlants = async () => {
     try {
       const token = localStorage.getItem("token");
@@ -35,18 +38,15 @@ export default function Plants() {
 
       if (Array.isArray(data)) {
         setPlants(data);
-
-        // ✅ cache for faster reload
         localStorage.setItem("plants", JSON.stringify(data));
       }
     } catch (err) {
-      console.error("Fetch error:", err);
+      console.error(err);
     } finally {
       setLoading(false);
     }
   };
 
-  // 🌱 INITIAL LOAD (WITH CACHE)
   useEffect(() => {
     const cached = localStorage.getItem("plants");
 
@@ -57,23 +57,17 @@ export default function Plants() {
 
     fetchPlants();
 
-    // 🔔 SOCKET LISTENER
     socket.on("plant_added", (newPlant) => {
       setPlants((prev) => [newPlant, ...prev]);
     });
 
-    return () => {
-      socket.off("plant_added");
-    };
+    return () => socket.off("plant_added");
   }, []);
 
-  // ➕ ADD PLANT
+  // ➕ ADD
   const addPlant = async () => {
     try {
-      if (!name || !waterIn) {
-        alert("Fill all fields");
-        return;
-      }
+      if (!name || !waterIn) return alert("Fill all fields");
 
       const token = localStorage.getItem("token");
 
@@ -92,36 +86,51 @@ export default function Plants() {
         setPlants((prev) => [data, ...prev]);
         setName("");
         setWaterIn("");
-
-        // 🔔 notify others
         socket.emit("plant_added", data);
-      } else {
-        alert(data.message || "Error adding plant");
       }
     } catch (err) {
       console.error(err);
     }
   };
 
-  // ❌ DELETE PLANT
+  // ❌ DELETE
   const deletePlant = async (id) => {
-    try {
-      const token = localStorage.getItem("token");
+    const token = localStorage.getItem("token");
 
-      await fetch(`${API}/api/plants/${id}`, {
-        method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+    await fetch(`${API}/api/plants/${id}`, {
+      method: "DELETE",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
 
-      setPlants((prev) => prev.filter((p) => p._id !== id));
-    } catch (err) {
-      console.error(err);
+    setPlants((prev) => prev.filter((p) => p._id !== id));
+  };
+
+  // ✏️ UPDATE
+  const updatePlant = async () => {
+    const token = localStorage.getItem("token");
+
+    const res = await fetch(`${API}/api/plants/${editingPlant._id}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(editingPlant),
+    });
+
+    const data = await res.json();
+
+    if (res.ok) {
+      setPlants((prev) =>
+        prev.map((p) => (p._id === data._id ? data : p))
+      );
+      setEditingPlant(null);
     }
   };
 
-  // ⏳ LOADING UI
+  // ⏳ LOADING
   if (loading) {
     return (
       <div className="text-center mt-10 text-gray-500 animate-pulse">
@@ -132,10 +141,10 @@ export default function Plants() {
 
   return (
     <div className="p-6">
-      <h2 className="text-xl font-semibold mb-4">🌱 Your Plants</h2>
+      <h2 className="text-2xl font-semibold mb-6">🌱 Your Plants</h2>
 
-      {/* ➕ ADD FORM */}
-      <div className="flex gap-2 mb-6">
+      {/* ➕ FORM */}
+      <div className="flex gap-3 mb-6 bg-white p-4 rounded-xl shadow">
         <input
           className="border p-2 rounded w-full"
           placeholder="Plant name"
@@ -144,7 +153,7 @@ export default function Plants() {
         />
         <input
           className="border p-2 rounded w-full"
-          placeholder="Water in (days)"
+          placeholder="Water in days"
           value={waterIn}
           onChange={(e) => setWaterIn(e.target.value)}
         />
@@ -156,31 +165,90 @@ export default function Plants() {
         </button>
       </div>
 
-      {/* 🌿 PLANTS LIST */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      {/* 🌿 LIST */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
         {plants.map((plant) => (
           <div
             key={plant._id}
-            className="bg-white p-4 rounded shadow text-center"
+            className="bg-white p-5 rounded-2xl shadow hover:shadow-lg transition"
           >
             <h3 className="font-semibold text-lg">{plant.name}</h3>
-            <p className="text-gray-500">💧 {plant.waterIn} days</p>
 
-            <button
-              onClick={() => deletePlant(plant._id)}
-              className="text-red-500 mt-2"
-            >
-              Delete
-            </button>
+            <p className="text-gray-500 mb-3">
+              💧 {plant.waterIn} days
+            </p>
+
+            <div className="flex justify-between">
+              <button
+                onClick={() => setEditingPlant(plant)}
+                className="text-blue-500 text-sm"
+              >
+                Edit
+              </button>
+
+              <button
+                onClick={() => deletePlant(plant._id)}
+                className="text-red-500 text-sm"
+              >
+                Delete
+              </button>
+            </div>
           </div>
         ))}
       </div>
 
-      {/* EMPTY STATE */}
+      {/* EMPTY */}
       {plants.length === 0 && (
-        <p className="text-center text-gray-400 mt-6">
-          No plants yet 🌱
-        </p>
+        <div className="text-center mt-10 text-gray-400">
+          🌱 No plants yet
+        </div>
+      )}
+
+      {/* ✏️ EDIT MODAL */}
+      {editingPlant && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center">
+          <div className="bg-white p-6 rounded-xl shadow w-80">
+            <h3 className="mb-4 font-semibold">Edit Plant</h3>
+
+            <input
+              className="border p-2 w-full mb-2"
+              value={editingPlant.name}
+              onChange={(e) =>
+                setEditingPlant({
+                  ...editingPlant,
+                  name: e.target.value,
+                })
+              }
+            />
+
+            <input
+              className="border p-2 w-full mb-4"
+              value={editingPlant.waterIn}
+              onChange={(e) =>
+                setEditingPlant({
+                  ...editingPlant,
+                  waterIn: e.target.value,
+                })
+              }
+            />
+
+            <div className="flex justify-between">
+              <button
+                onClick={updatePlant}
+                className="bg-green-500 text-white px-4 py-1 rounded"
+              >
+                Save
+              </button>
+
+              <button
+                onClick={() => setEditingPlant(null)}
+                className="text-red-500"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
