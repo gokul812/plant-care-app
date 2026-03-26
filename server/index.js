@@ -4,6 +4,7 @@ import cors from "cors";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import User from "./models/User.js";
+import { Server } from "socket.io";
 
 const app = express();
 
@@ -132,6 +133,22 @@ app.put("/plants/:id", authMiddleware, async (req, res) => {
     { new: true }
   );
   res.json(updated);
+});
+
+// ======== notification =========
+
+const io = new Server(server, {
+  cors: {
+    origin: "*",
+  },
+});
+
+io.on("connection", (socket) => {
+  console.log("User connected");
+
+  socket.on("newPlant", (data) => {
+    io.emit("plantAdded", newPlant);
+  });
 });
 
 // ================= TEST =================

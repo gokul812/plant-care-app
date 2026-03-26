@@ -1,4 +1,6 @@
 import { useEffect, useState } from "react";
+import { io } from "socket.io-client";
+
 
 export default function Plants() {
   const [plants, setPlants] = useState([]);
@@ -9,6 +11,7 @@ export default function Plants() {
   const [editingPlant, setEditingPlant] = useState(null);
   const [editName, setEditName] = useState("");
   const [editWater, setEditWater] = useState("");
+  const socket = io(import.meta.env.VITE_API_URL);
 
   const API = import.meta.env.VITE_API_URL;
 
@@ -48,22 +51,28 @@ export default function Plants() {
   }, [plants]);
 
   // ➕ Add plant
-  const addPlant = async () => {
-    if (!name || !waterIn) return;
 
-    await fetch(`${API}/plants`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: localStorage.getItem("token"),
-      },
-      body: JSON.stringify({ name, waterIn }),
-    });
+const addPlant = async () => {
+  if (!name) return;
 
-    setName("");
-    setWaterIn("");
-    fetchPlants();
-  };
+  const smartWater = getSmartWatering(name);
+
+  await fetch(`${API}/plants`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: localStorage.getItem("token"),
+    },
+    body: JSON.stringify({
+      name,
+      waterIn: smartWater,
+    }),
+  });
+  socket.emit("newPlant", { name, waterIn });
+  setName("");
+  fetchPlants();
+};
+  
 
   // ❌ Delete plant
   const deletePlant = async (id) => {
@@ -101,6 +110,14 @@ export default function Plants() {
     setEditingPlant(null);
     fetchPlants();
   };
+
+  const getSmartWatering = (name) => {
+  if (name.toLowerCase().includes("cactus")) return "7 days";
+  if (name.toLowerCase().includes("rose")) return "2 days";
+  if (name.toLowerCase().includes("fern")) return "1 day";
+
+  return "3 days"; // default AI logic
+};
 
   return (
     <div>
