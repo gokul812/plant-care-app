@@ -1,5 +1,4 @@
 import { Outlet, NavLink, useNavigate } from "react-router-dom";
-import { NavLink } from "react-router-dom";
 import { LayoutDashboard, Leaf, Settings } from "lucide-react";
 import Notifications from "./Notifications";
 import { useState, useEffect } from "react";
@@ -71,7 +70,9 @@ export default function Layout({ children }) {
       </div>
 
       {/* Content */}
-      <div className="flex-1 p-6">{children}</div>
+      <div className="flex-1 p-6">
+    <Outlet />
     </div>
+</div>
   );
 }
