@@ -8,12 +8,17 @@ export default function Login() {
 
   const API = import.meta.env.VITE_API_URL;
 
+
+
   // Redirect if already logged in
   useEffect(() => {
     const token = localStorage.getItem("token");
-    if (token) {
-      navigate("/");
-    }
+    if (data.token) {
+  localStorage.setItem("token", data.token);
+
+  // ✅ Force reload to ensure token is ready everywhere
+  window.location.href = "/";
+}
   }, []);
 
   const handleLogin = async () => {

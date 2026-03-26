@@ -17,41 +17,49 @@ const Dashboard = () => {
 
   const token = localStorage.getItem("token");
 
+  if (!token) {
+  window.location.href = "/login";
+  return;
+}
+
   const API_URL = import.meta.env.VITE_API_URL;
 
-  useEffect(() => {
-    fetch(`${API_URL}/api/plants`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
+   useEffect(() => {
+  const token = localStorage.getItem("token");
+
+  if (!token) {
+    window.location.href = "/login";
+    return;
+  }
+
+  fetch(`${API_URL}/api/plants`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  })
+    .then((res) => {
+      if (res.status === 401) {
+        localStorage.removeItem("token");
+        window.location.href = "/login";
+        return;
+      }
+      return res.json();
     })
-      .then((res) => res.json())
-      .then((plants) => {
-        if (!Array.isArray(plants)) {
-          setLoading(false);
-          return;
-        }
+    .then((plants) => {
+      if (!Array.isArray(plants)) return;
 
-        setPlants(plants);
+      setPlants(plants);
 
-        const total = plants.length;
+      const total = plants.length;
+      const watered = 0; // adjust later
 
-        const watered = plants.filter(
-          (p) => p.watered === true
-        ).length;
-
-        setData([
-          { name: "Watered", value: watered },
-          { name: "Needs Water", value: total - watered },
-        ]);
-
-        setLoading(false);
-      })
-      .catch((err) => {
-        console.error(err);
-        setLoading(false);
-      });
-  }, [token]);
+      setData([
+        { name: "Watered", value: watered },
+        { name: "Needs Water", value: total - watered },
+      ]);
+    })
+    .catch((err) => console.error(err));
+}, []);
 
   if (loading) {
     return <p className="p-6">Loading dashboard...</p>;

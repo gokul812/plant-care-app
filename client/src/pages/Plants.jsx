@@ -9,30 +9,45 @@ const Plants = () => {
 
   const token = localStorage.getItem("token");
 
+  if (!token) {
+  window.location.href = "/login";
+  return;
+}
+
   // ✅ Correct API URL (works in production)
   const API_URL = import.meta.env.VITE_API_URL;
 
   // 🔄 Fetch plants from backend
   const fetchPlants = () => {
-    fetch(`${API_URL}/api/plants`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
+  const token = localStorage.getItem("token");
+
+  // ✅ PROTECTION
+  if (!token) {
+    window.location.href = "/login";
+    return;
+  }
+
+  fetch(`${API_URL}/api/plants`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  })
+    .then((res) => {
+      if (res.status === 401) {
+        // 🔥 Auto logout if token invalid
+        localStorage.removeItem("token");
+        window.location.href = "/login";
+        return;
+      }
+      return res.json();
     })
-      .then((res) => res.json())
-      .then((data) => {
-        if (Array.isArray(data)) {
-          setPlants(data);
-        } else {
-          setPlants([]);
-        }
-        setLoading(false);
-      })
-      .catch((err) => {
-        console.error("Error fetching plants:", err);
-        setLoading(false);
-      });
-  };
+    .then((data) => {
+      if (Array.isArray(data)) {
+        setPlants(data);
+      }
+    })
+    .catch((err) => console.error(err));
+};
 
   useEffect(() => {
     fetchPlants();
