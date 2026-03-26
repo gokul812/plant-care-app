@@ -1,3 +1,7 @@
 export default function Settings() {
-  return <div className="p-6">⚙️ Settings Page</div>;
+  return (
+    <div>
+      <h2 className="text-lg font-semibold">⚙️ Settings Page</h2>
+    </div>
+  );
 }
