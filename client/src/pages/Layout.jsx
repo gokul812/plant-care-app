@@ -1,6 +1,7 @@
 import { Outlet, NavLink, useNavigate } from "react-router-dom";
 import { LayoutDashboard, Leaf, Settings, Bell } from "lucide-react";
 import { useState, useEffect } from "react";
+import Notifications from "./Notifications";
 
 export default function Layout() {
   const navigate = useNavigate();
