@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { socket } from "../socket";
 
+const API_URL = "https://plant-care-app-fyh5.onrender.com/api";
+
 export default function Plants() {
   const [plants, setPlants] = useState([]);
   const [name, setName] = useState("");
