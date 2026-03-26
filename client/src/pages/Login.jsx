@@ -22,28 +22,32 @@ export default function Login() {
   }, []);
 
   const handleLogin = async () => {
-    try {
-      const res = await fetch(`${API}/login`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email, password }),
-      });
+  try {
+    const res = await fetch(`${API}/login`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ email, password }),
+    });
 
-      const data = await res.json();
+    const data = await res.json();
 
-      if (data.token) {
-        localStorage.setItem("token", data.token);
-        navigate("/");
-      } else {
-        alert(data.message || "Login failed");
-      }
-    } catch (err) {
-      console.log(err);
-      alert("Server error");
+    console.log("LOGIN RESPONSE:", data); // ✅ safe debug
+
+    if (data?.token) {
+      localStorage.setItem("token", data.token);
+
+      // ✅ force reload (better than navigate)
+      window.location.href = "/";
+    } else {
+      alert(data?.message || "Login failed");
     }
-  };
+  } catch (err) {
+    console.error("Login error:", err);
+    alert("Server error");
+  }
+};
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-100">
