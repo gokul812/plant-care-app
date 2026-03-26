@@ -4,11 +4,10 @@ const URL = import.meta.env.VITE_API_URL;
 
 export const socket = io(URL, {
   autoConnect: false,
-  transports: ["websocket", "polling"], // 🔥 IMPORTANT FIX
-  withCredentials: true,
+  transports: ["polling", "websocket"], // 🔥 FIX
 });
 
-// connect only if logged in
+// auto connect if token exists
 if (localStorage.getItem("token")) {
   socket.connect();
 }

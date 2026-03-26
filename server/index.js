@@ -148,20 +148,18 @@ app.get("/api/plants", authMiddleware, async (req, res) => {
 });
 
 // ADD plant
-app.post("/api/plants", authMiddleware, async (req, res) => {
+app.post("/api/plants", async (req, res) => {
   try {
-    const plant = await Plant.create({
-      ...req.body,
-      userId: req.user.id,
-    });
+    const plant = new Plant(req.body);
+    await plant.save();
 
-    // 🔥 IMPORTANT FIX (MATCH FRONTEND)
-    const io = req.app.get("io");
+    // 🔥 ADD THIS (CRITICAL FIX)
+    console.log("🔥 Emitting plant_added:", plant);
     io.emit("plant_added", plant);
 
     res.json(plant);
-  } catch {
-    res.status(500).json({ message: "Error adding plant" });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
   }
 });
 
