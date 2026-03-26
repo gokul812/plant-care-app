@@ -67,8 +67,12 @@ export default function Plants() {
   }, []);
 
   // ➕ ADD
-  const addPlant = async () => {
-  const res = await fetch(`${API_URL}/api/plants`, {
+ const addPlant = async () => {
+  if (!name || !waterInDays) return;
+
+  const token = localStorage.getItem("token");
+
+  const res = await fetch(`${API_URL}/plants`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -76,21 +80,18 @@ export default function Plants() {
     },
     body: JSON.stringify({
       name,
-      waterIn: days,
+      waterInDays,
     }),
   });
 
   await res.json();
-
-  // ✅ ALWAYS REFETCH INSTEAD OF MANUAL PUSH
-  fetchPlants();
-
-  setName("");
-  setDays("");
+  fetchPlants(); // refresh
 };
 
   // ❌ DELETE
   const deletePlant = async (id) => {
+
+    const token = localStorage.getItem("token");
   await fetch(`${API_URL}/api/plants/${id}`, {
     method: "DELETE",
     headers: {
