@@ -9,27 +9,29 @@ import { Server } from "socket.io";
 import User from "./models/User.js";
 
 const app = express();
-
-// ✅ Create HTTP server (IMPORTANT)
 const server = http.createServer(app);
 
 // ================= SOCKET.IO =================
 
 const io = new Server(server, {
   cors: {
-    origin: "*",
+    origin: [
+      "http://localhost:5173",
+      "https://plant-care-app-zefq.vercel.app",
+    ],
+    methods: ["GET", "POST"],
+    credentials: true,
   },
   transports: ["websocket", "polling"],
 });
 
-// Make io available everywhere
 app.set("io", io);
 
 io.on("connection", (socket) => {
-  console.log("⚡ User connected:", socket.id);
+  console.log("🔥 Socket connected:", socket.id);
 
   socket.on("disconnect", () => {
-    console.log("❌ User disconnected:", socket.id);
+    console.log("❌ Socket disconnected:", socket.id);
   });
 });
 
@@ -43,6 +45,7 @@ app.use(
       "http://localhost:5173",
       "https://plant-care-app-zefq.vercel.app",
     ],
+    credentials: true,
   })
 );
 
@@ -51,7 +54,7 @@ app.use(
 mongoose
   .connect(process.env.MONGO_URI)
   .then(() => console.log("✅ MongoDB connected"))
-  .catch((err) => console.log(err));
+  .catch((err) => console.log("❌ DB Error:", err));
 
 // ================= MODELS =================
 
@@ -67,9 +70,9 @@ const Plant = mongoose.model("Plant", plantSchema);
 
 // Signup
 app.post("/signup", async (req, res) => {
-  const { email, password } = req.body;
-
   try {
+    const { email, password } = req.body;
+
     const existing = await User.findOne({ email });
     if (existing) {
       return res.status(400).json({ message: "User already exists" });
@@ -77,10 +80,7 @@ app.post("/signup", async (req, res) => {
 
     const hashed = await bcrypt.hash(password, 10);
 
-    await User.create({
-      email,
-      password: hashed,
-    });
+    await User.create({ email, password: hashed });
 
     res.json({ message: "Signup successful" });
   } catch (err) {
@@ -90,21 +90,21 @@ app.post("/signup", async (req, res) => {
 
 // Login
 app.post("/login", async (req, res) => {
-  const { email, password } = req.body;
-
   try {
-    const user = await User.findOne({ email });
+    const { email, password } = req.body;
 
-    if (!user) return res.status(400).json({ message: "User not found" });
+    const user = await User.findOne({ email });
+    if (!user)
+      return res.status(400).json({ message: "User not found" });
 
     const isMatch = await bcrypt.compare(password, user.password);
-
     if (!isMatch)
       return res.status(400).json({ message: "Wrong password" });
 
     const token = jwt.sign(
       { id: user._id },
-      process.env.JWT_SECRET
+      process.env.JWT_SECRET,
+      { expiresIn: "7d" }
     );
 
     res.json({ token });
@@ -122,7 +122,6 @@ const authMiddleware = (req, res, next) => {
     return res.status(401).json({ message: "No token" });
   }
 
-  // ✅ Support "Bearer TOKEN"
   const token = authHeader.startsWith("Bearer ")
     ? authHeader.split(" ")[1]
     : authHeader;
@@ -132,7 +131,7 @@ const authMiddleware = (req, res, next) => {
     req.user = decoded;
     next();
   } catch {
-    res.status(401).json({ message: "Invalid token" });
+    return res.status(401).json({ message: "Invalid token" });
   }
 };
 
@@ -140,41 +139,59 @@ const authMiddleware = (req, res, next) => {
 
 // GET plants
 app.get("/api/plants", authMiddleware, async (req, res) => {
-  const plants = await Plant.find({ userId: req.user.id });
-  res.json(plants);
+  try {
+    const plants = await Plant.find({ userId: req.user.id });
+    res.json(plants);
+  } catch {
+    res.status(500).json({ message: "Error fetching plants" });
+  }
 });
 
+// ADD plant
 app.post("/api/plants", authMiddleware, async (req, res) => {
-  const plant = await Plant.create({
-    ...req.body,
-    userId: req.user.id,
-  });
+  try {
+    const plant = await Plant.create({
+      ...req.body,
+      userId: req.user.id,
+    });
 
-  const io = req.app.get("io");
-  io.emit("plantAdded", plant);
+    // 🔥 IMPORTANT FIX (MATCH FRONTEND)
+    const io = req.app.get("io");
+    io.emit("plant_added", plant);
 
-  res.json(plant);
+    res.json(plant);
+  } catch {
+    res.status(500).json({ message: "Error adding plant" });
+  }
 });
 
 // DELETE plant
 app.delete("/api/plants/:id", authMiddleware, async (req, res) => {
-  await Plant.findByIdAndDelete(req.params.id);
+  try {
+    await Plant.findByIdAndDelete(req.params.id);
 
-  const io = req.app.get("io");
-  io.emit("plantDeleted", req.params.id);
+    const io = req.app.get("io");
+    io.emit("plant_deleted", req.params.id);
 
-  res.json({ success: true });
+    res.json({ success: true });
+  } catch {
+    res.status(500).json({ message: "Error deleting plant" });
+  }
 });
 
 // UPDATE plant
 app.put("/api/plants/:id", authMiddleware, async (req, res) => {
-  const updated = await Plant.findByIdAndUpdate(
-    req.params.id,
-    req.body,
-    { new: true }
-  );
+  try {
+    const updated = await Plant.findByIdAndUpdate(
+      req.params.id,
+      req.body,
+      { new: true }
+    );
 
-  res.json(updated);
+    res.json(updated);
+  } catch {
+    res.status(500).json({ message: "Error updating plant" });
+  }
 });
 
 // ================= TEST =================

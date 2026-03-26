@@ -7,17 +7,23 @@ export default function Notifications() {
 
   // 🔔 listen to socket
   useEffect(() => {
-    socket.on("plant_added", (plant) => {
-      const newNotif = {
-        id: Date.now(),
-        message: `🌱 New plant added: ${plant.name}`,
-      };
+  socket.on("connect", () => {
+    console.log("✅ Socket connected");
+  });
 
-      setNotifications((prev) => [newNotif, ...prev]);
-    });
+  socket.on("plant_added", (plant) => {
+    console.log("🔥 RECEIVED:", plant);
 
-    return () => socket.off("plant_added");
-  }, []);
+    const newNotif = {
+      id: Date.now(),
+      message: `🌱 New plant added: ${plant.name}`,
+    };
+
+    setNotifications((prev) => [newNotif, ...prev]);
+  });
+
+  return () => socket.off("plant_added");
+}, []);
 
   return (
     <div className="relative">
