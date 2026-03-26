@@ -38,6 +38,22 @@ app.post("/plants", async (req, res) => {
   res.json(plant);
 });
 
+// DELETE
+app.delete("/plants/:id", async (req, res) => {
+  await Plant.findByIdAndDelete(req.params.id);
+  res.json({ success: true });
+});
+
+// UPDATE
+app.put("/plants/:id", async (req, res) => {
+  const updated = await Plant.findByIdAndUpdate(
+    req.params.id,
+    req.body,
+    { new: true }
+  );
+  res.json(updated);
+});
+
 // Test route
 app.get("/", (req, res) => {
   res.send("API is running");
