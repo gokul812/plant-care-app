@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { socket } from "../socket";
+import defaultPlant from "../assets/default-plant.jpg";
 
 const API_URL = "https://plant-care-app-fyh5.onrender.com/api";
 
@@ -251,7 +252,7 @@ export default function Plants() {
     src={
       plant.image && plant.image.startsWith("http")
         ? plant.image
-        : `https://source.unsplash.com/400x300/?plant,${plant.name}`
+        : defaultPlant
     }
     alt="plant"
     className="w-full h-full object-cover md:object-contain"
