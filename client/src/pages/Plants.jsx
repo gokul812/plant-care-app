@@ -9,6 +9,7 @@ export default function Plants() {
   const [waterIn, setWaterIn] = useState("");
   const [loading, setLoading] = useState(true);
   const [editingPlant, setEditingPlant] = useState(null);
+  const [image, setImage] = useState(null);
 
   // 🌿 FETCH PLANTS
   const fetchPlants = async () => {
@@ -91,13 +92,14 @@ export default function Plants() {
       },
       body: JSON.stringify({
         name,
-        waterIn, // ✅ FIX
+        waterIn,
+        image, // ✅ FIX
       }),
     });
 
     setName("");
     setWaterIn("");
-
+    setImage(null);
     fetchPlants(); // ✅ refresh
   };
 
@@ -114,6 +116,15 @@ export default function Plants() {
 
     fetchPlants(); // ✅ refresh
   };
+
+  // image input handler
+const handleImageUpload = (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  const imageUrl = URL.createObjectURL(file);
+  setImage(imageUrl);
+};
 
 
   // ✏️ UPDATE
@@ -166,6 +177,27 @@ export default function Plants() {
           value={waterIn}
           onChange={(e) => setWaterIn(e.target.value)}
         />
+        <input
+  type="file"
+  accept="image/*"
+  capture="environment"
+  onChange={handleImageUpload}
+  className="hidden"
+  id="imageUpload"
+/>
+{image && (
+  <img
+    src={image}
+    alt="preview"
+    className="w-20 h-20 object-cover rounded-lg"
+  />
+)}
+   <label
+  htmlFor="imageUpload"
+  className="bg-gray-200 px-3 py-2 rounded cursor-pointer hover:bg-gray-300"
+>
+  📷 Image
+</label>
 
         <button
           onClick={addPlant}
@@ -185,10 +217,13 @@ export default function Plants() {
 
   {/* IMAGE */}
   <img
-    src={`https://source.unsplash.com/400x300/?plant,${plant.name}`}
-    alt="plant"
-    className="w-full h-40 object-cover"
-  />
+  src={
+    plant.image ||
+    `https://source.unsplash.com/400x300/?plant,${plant.name}`
+  }
+  alt="plant"
+  className="w-full h-40 object-cover"
+/>
 
   {/* CONTENT */}
   <div className="p-4">
