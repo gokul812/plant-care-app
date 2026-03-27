@@ -90,7 +90,7 @@ return (
       {/* Dropdown */}
       {open && (
         <div className="absolute right-0 mt-2 w-72 bg-white shadow-lg rounded-xl p-3 z-50">
-          <h4 className="font-semibold mb-2">Notifications</h4>
+          <h4 className="font-semibold text-lg text-gray-900 mb-2">Notifications</h4>
 
           {notifications.length === 0 ? (
             <p className="text-gray-400 text-sm">No notifications</p>
