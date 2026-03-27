@@ -124,23 +124,6 @@ export default function Plants() {
   }
 };
 
-
-const newPlant = await res.json();
-
-// ✅ update UI immediately
-setPlants((prev) => [newPlant, ...prev]);
-
-      setName("");
-      setWaterIn("");
-      setImage(null);
-      setSelectedFile(null);
-
-    //  fetchPlants();
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
   // ❌ DELETE
   const deletePlant = async (id) => {
     const token = localStorage.getItem("token");
