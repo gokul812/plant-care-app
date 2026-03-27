@@ -89,7 +89,7 @@ return (
 
       {/* Dropdown */}
       {open && (
-        <div className="absolute right-0 mt-2 w-72 bg-white shadow-lg rounded-xl p-3 z-50">
+        <div className="absolute right-0 mt-2 w-72 bg-white shadow-lg rounded-xl p-3 z-50 text-gray-900">
           <h4 className="font-semibold text-lg text-gray-900 mb-2">Notifications</h4>
 
           {notifications.length === 0 ? (
@@ -98,14 +98,14 @@ return (
             <ul className="space-y-2 text-sm max-h-64 overflow-y-auto">
               {notifications.map((n) => (
                 <li
-                  key={n._id}
-                  onClick={() => markAsRead(n._id)}
-                  className={`p-2 rounded cursor-pointer ${
-                    n.read ? "bg-gray-100" : "bg-green-100"
-                  }`}
-                >
-                  {n.message}
-                </li>
+  key={n._id}
+  onClick={() => markAsRead(n._id)}
+  className={`p-2 rounded cursor-pointer text-gray-800 ${
+    n.read ? "bg-gray-100" : "bg-green-100"
+  }`}
+>
+  {n.message || n.text || "Notification"}
+</li>
               ))}
             </ul>
           )}

@@ -19,7 +19,7 @@ export default function Layout() {
 
   return (
   <div
-    className="flex h-screen w-full relative bg-cover bg-center overflow-hidden"
+    className="flex h-screen w-full relative bg-cover bg-center"
     style={{
       backgroundImage: `url("https://images.unsplash.com/photo-1501004318641-b39e6451bec6")`
     }}
