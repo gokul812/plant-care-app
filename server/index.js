@@ -9,8 +9,6 @@ import Notification from "./models/Notification.js";
 import User from "./models/User.js";
 import upload from "./middleware/upload.js";
 
-
-const upload = require("./middleware/upload");
 const app = express();
 const server = http.createServer(app);
 
@@ -150,7 +148,7 @@ app.post("/api/plants", authMiddleware, upload.single("image"), async (req, res)
   try {
     console.log("FILE:", req.file); // debug
     const plant = await Plant.create({
-      user: req.user,
+      userId: req.user.id,
       name: req.body.name,
       waterIn: req.body.waterIn,
       image: req.file ? req.file.path : "", // ✅ important
@@ -209,7 +207,7 @@ app.put("/api/plants/:id", authMiddleware, upload.single("image"), async (req, r
       }
     const updated = await Plant.findByIdAndUpdate(
       req.params.id,
-      req.body,
+      updateData,
       { new: true }
     );
 
