@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { socket } from "../socket";
-// import defaultPlant from "../assets/default-plant.jpg";
 
 const API_URL = "https://plant-care-app-fyh5.onrender.com/api";
 
@@ -13,11 +12,11 @@ export default function Plants() {
   const [editImage, setEditImage] = useState(null);
   const [adding, setAdding] = useState(false);
 
-  // ✅ IMAGE STATES
-  const [image, setImage] = useState(null); // preview
-  const [selectedFile, setSelectedFile] = useState(null); // actual file
+  // IMAGE STATES
+  const [image, setImage] = useState(null);
+  const [selectedFile, setSelectedFile] = useState(null);
 
-  // 🌿 FETCH PLANTS
+  // FETCH
   const fetchPlants = async () => {
     try {
       const token = localStorage.getItem("token");
@@ -52,92 +51,82 @@ export default function Plants() {
     }
   };
 
-  // 🔌 SOCKET + INITIAL LOAD
+  // SOCKET
   useEffect(() => {
-  fetchPlants();
+    fetchPlants();
 
-  // 🔥 REMOVE OLD LISTENERS FIRST
-  socket.off("plant_added");
-  socket.off("plant_deleted");
+    socket.off("plant_added");
+    socket.off("plant_deleted");
 
-  // 🔥 ADD CLEAN LISTENERS
-  socket.on("plant_added", (newPlant) => {
-      console.log("PLANT ADDED EVENT"); // 👀 check count
-    setPlants((prev) => {
-      const exists = prev.some((p) => p._id === newPlant._id);
-      if (exists) return prev;
-      return [newPlant, ...prev];
+    socket.on("plant_added", (newPlant) => {
+      setPlants((prev) => {
+        const exists = prev.some((p) => p._id === newPlant._id);
+        if (exists) return prev;
+        return [newPlant, ...prev];
+      });
     });
-  });
 
-  socket.on("plant_deleted", (id) => {
-    setPlants((prev) => prev.filter((p) => p._id !== id));
-  });
+    socket.on("plant_deleted", (id) => {
+      setPlants((prev) => prev.filter((p) => p._id !== id));
+    });
+  }, []);
 
-}, []);
-
-  // 📷 IMAGE HANDLER
+  // IMAGE UPLOAD
   const handleImageUpload = (e) => {
     const file = e.target.files[0];
     if (!file) return;
 
-     if (file.type === "image/heic" || file.name.endsWith(".heic")) {
-    alert("HEIC format is not fully supported. Please use JPG or PNG.");
-    return;
-  }
-
-    setSelectedFile(file); // for upload
-    setImage(URL.createObjectURL(file)); // preview
-  };
-
-  // ➕ ADD PLANT (FIXED)
-  const addPlant = async () => {
-
-     if (adding) return; // 🚫 prevent double click
-
-  if (!name.trim() || !waterIn.trim()) {
-    alert("Please fill all fields");
-    return;
-  }
-
-  try {
-    setAdding(true); // 🔒 lock button
-
-    const token = localStorage.getItem("token");
-
-    const formData = new FormData();
-    formData.append("name", name);
-    formData.append("waterIn", waterIn);
-
-    if (selectedFile) {
-      formData.append("image", selectedFile);
+    if (file.type === "image/heic" || file.name.endsWith(".heic")) {
+      alert("HEIC not supported. Use JPG/PNG.");
+      return;
     }
 
-    // ✅ FIX: define res
-    const res = await fetch(`${API_URL}/plants`, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-      body: formData,
-    });
+    setSelectedFile(file);
+    setImage(URL.createObjectURL(file));
+  };
 
-    // const newPlant = await res.json();
+  // ADD
+  const addPlant = async () => {
+    if (adding) return;
 
+    if (!name.trim() || !waterIn.trim()) {
+      alert("Fill all fields");
+      return;
+    }
 
-    setName("");
-    setWaterIn("");
-    setImage(null);
-    setSelectedFile(null);
+    try {
+      setAdding(true);
 
-  } catch (err) {
-    console.error(err);
-  } finally {
-    setAdding(false); // 🔓 unlock
-  }
-};
+      const token = localStorage.getItem("token");
 
-  // ❌ DELETE
+      const formData = new FormData();
+      formData.append("name", name);
+      formData.append("waterIn", waterIn);
+
+      if (selectedFile) {
+        formData.append("image", selectedFile);
+      }
+
+      await fetch(`${API_URL}/plants`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: formData,
+      });
+
+      setName("");
+      setWaterIn("");
+      setImage(null);
+      setSelectedFile(null);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setAdding(false);
+    }
+  };
+
+  // DELETE
   const deletePlant = async (id) => {
     const token = localStorage.getItem("token");
 
@@ -151,149 +140,108 @@ export default function Plants() {
     fetchPlants();
   };
 
-  // ✏️ UPDATE (UNCHANGED LOGIC)
- const updatePlant = async () => {
-  const token = localStorage.getItem("token");
+  // UPDATE (FIXED IMAGE SUPPORT)
+  const updatePlant = async () => {
+    const token = localStorage.getItem("token");
 
-  const formData = new FormData();
-  formData.append("name", editPlant.name);
-  formData.append("waterIn", editPlant.waterIn);
+    const formData = new FormData();
+    formData.append("name", editPlant.name);
+    formData.append("waterIn", editPlant.waterIn);
 
-  // ✅ ONLY ADD IMAGE IF SELECTED
-  if (editImage) {
-    formData.append("image", editImage);
-  }
+    if (editImage) {
+      formData.append("image", editImage);
+    }
 
-  const res = await fetch(`${API_URL}/plants/${editPlant._id}`, {
-    method: "PUT",
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-    body: formData,
-  });
+    const res = await fetch(`${API_URL}/plants/${editPlant._id}`, {
+      method: "PUT",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      body: formData,
+    });
 
-  if (res.ok) {
-    setEditPlant(null);
-    setEditImage(null); // ✅ reset
-    fetchPlants();
-  }
-};
+    if (res.ok) {
+      setEditPlant(null);
+      setEditImage(null);
+      fetchPlants();
+    }
+  };
 
-  // ⏳ LOADING
   if (loading) {
-    return (
-      <div className="text-center mt-10 text-gray-500 animate-pulse">
-        Loading plants 🌿...
-      </div>
-    );
+    return <div className="text-center mt-10">Loading plants...</div>;
   }
 
   return (
     <div className="max-w-6xl mx-auto w-full">
       <h2 className="text-2xl font-semibold mb-6">🌱 Your Plants</h2>
 
-      {/* ➕ FORM */}
+      {/* ADD FORM */}
       <div className="flex flex-col md:flex-row gap-3 mb-6 bg-white p-4 rounded-xl shadow w-full">
         <input
-          className="border p-2 rounded text-lg text-gray-900 w-full"
+          className="border p-2 rounded w-full"
           placeholder="Plant name"
           value={name}
           onChange={(e) => setName(e.target.value)}
         />
 
         <input
-          className="border p-2 rounded text-lg text-gray-900 w-full"
+          className="border p-2 rounded w-full"
           placeholder="Water in days"
           value={waterIn}
           onChange={(e) => setWaterIn(e.target.value)}
         />
 
-        {/* IMAGE INPUT */}
         <input
           type="file"
           accept="image/*"
           onChange={handleImageUpload}
-          className="opacity-0 absolute w-0 h-0"
+          className="hidden"
           id="imageUpload"
         />
 
-        {/* PREVIEW */}
         {image && (
           <img
             src={image}
             alt="preview"
-            className="w-20 h-20 object-cover rounded-lg"
+            className="w-20 h-20 object-cover rounded"
           />
         )}
 
-        <label
-          htmlFor="imageUpload"
-          className="bg-gray-200 px-3 py-2 rounded cursor-pointer hover:bg-gray-300"
-        >
+        <label htmlFor="imageUpload" className="bg-gray-200 px-3 py-2 rounded cursor-pointer">
           📷 Image
         </label>
 
-        <button
-  onClick={addPlant}
-  disabled={adding}
-  className={`px-4 rounded ${
-    adding
-      ? "bg-gray-400 cursor-not-allowed text-white"
-      : "bg-green-500 hover:bg-green-600 text-white"
-  }`}
->
-  {adding ? "Adding..." : "Add"}
-</button>
+        <button onClick={addPlant} disabled={adding} className="bg-green-500 text-white px-4 rounded">
+          {adding ? "Adding..." : "Add"}
+        </button>
       </div>
 
-      {/* 🌿 LIST */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 mt-6 w-full">
+      {/* LIST */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
         {plants.map((plant) => (
-          <div
-            key={plant._id}
-            className="bg-white rounded-2xl shadow-md hover:shadow-xl transition overflow-hidden"
-          >
-            {/* IMAGE */}
-          <div className="w-full h-48 md:h-52 overflow-hidden bg-gray-100 rounded-t-2xl">
- <img
-  src={
-    plant.image &&
-    typeof plant.image === "string" &&
-    plant.image.startsWith("http")
-      ? plant.image
-      : "/default-plant.jpg"
-  }
-  alt="plant"
-  onError={(e) => {
-    e.target.src = "/default-plant.jpg";
-  }}
-  className="w-full h-full object-cover md:object-contain"
-/>
+          <div key={plant._id} className="bg-white rounded-xl shadow overflow-hidden">
+            <div className="h-48 bg-gray-100">
+              <img
+                src={
+                  plant.image && plant.image.startsWith("http")
+                    ? plant.image
+                    : "/default-plant.jpg"
+                }
+                alt="plant"
+                onError={(e) => (e.target.src = "/default-plant.jpg")}
+                className="w-full h-full object-cover"
+              />
+            </div>
 
-</div>
-
-            {/* CONTENT */}
             <div className="p-4">
-              <h3 className="font-semibold text-lg text-gray-900">
-                {plant.name}
-              </h3>
+              <h3>{plant.name}</h3>
+              <p>💧 {plant.waterIn} days</p>
 
-              <p className="text-gray-500 text-sm mt-1">
-                💧 Water in {plant.waterIn} days
-              </p>
-
-              <div className="flex justify-between mt-4">
-                <button
-                  onClick={() => setEditPlant(plant)}
-                  className="text-blue-500 text-sm"
-                >
+              <div className="flex justify-between mt-3">
+                <button onClick={() => setEditPlant(plant)} className="text-blue-500">
                   Edit
                 </button>
-
-                <button
-                  onClick={() => deletePlant(plant._id)}
-                  className="text-red-500 text-sm"
-                >
+                <button onClick={() => deletePlant(plant._id)} className="text-red-500">
                   Delete
                 </button>
               </div>
@@ -302,65 +250,50 @@ export default function Plants() {
         ))}
       </div>
 
-      {/* EMPTY */}
-      {plants.length === 0 && (
-        <div className="text-center mt-10 text-gray-400">
-          🌱 No plants yet
-        </div>
-      )}
-
-      {/* ✏️ EDIT MODAL */}
+      {/* EDIT MODAL */}
       {editPlant && (
-
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center">
-          <div className="bg-white p-6 rounded-xl text-gray-900 shadow w-96">
-            <h3 className="mb-4  font-semibold text-gray-900">Edit Plant</h3>
+          <div className="bg-white p-6 rounded-xl w-96">
+            <h3 className="mb-4 font-semibold">Edit Plant</h3>
 
             <input
-              className="border p-2 w-full mb-2 text-gray-900 bg-white"
+              className="border p-2 w-full mb-2"
               value={editPlant.name}
               onChange={(e) =>
-                setEditPlant({
-                  ...editingPlant,
-                  name: e.target.value,
-                })
+                setEditPlant({ ...editPlant, name: e.target.value })
               }
             />
 
             <input
-              className="border p-2 w-full mb-4  text-gray-900 bg-white"
-              value={editingPlant.waterIn}
+              className="border p-2 w-full mb-2"
+              value={editPlant.waterIn}
               onChange={(e) =>
-                setEditPlant({
-                  ...editingPlant,
-                  waterIn: e.target.value,
-                })
+                setEditPlant({ ...editPlant, waterIn: e.target.value })
               }
             />
-            <p className="text-sm text-gray-500 mt-2">Change Image</p>
-            <input
-  type="file"
-  accept="image/*"
-  onChange={(e) => setEditImage(e.target.files[0])}
-  className="mt-2 w-full"
-/>
-  <img
-    src={URL.createObjectURL(editImage)}
-    className="w-20 h-20 object-cover mt-2 rounded"
-  />
 
-            <div className="flex justify-between">
-              <button
-                onClick={updatePlant}
-                className="bg-green-500 text-white px-4 py-1 rounded"
-              >
+            <p className="text-sm mt-2">Change Image</p>
+
+            <input
+              type="file"
+              accept="image/*"
+              onChange={(e) => setEditImage(e.target.files[0])}
+              className="mt-2 w-full"
+            />
+
+            {editImage && (
+              <img
+                src={URL.createObjectURL(editImage)}
+                className="w-20 h-20 mt-2 rounded object-cover"
+              />
+            )}
+
+            <div className="flex justify-between mt-4">
+              <button onClick={updatePlant} className="bg-green-500 text-white px-4 py-1 rounded">
                 Save
               </button>
 
-              <button
-                onClick={() => setEditPlant(null)}
-                className="text-red-500"
-              >
+              <button onClick={() => setEditPlant(null)} className="text-red-500">
                 Cancel
               </button>
             </div>
