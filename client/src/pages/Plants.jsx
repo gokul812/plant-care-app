@@ -9,7 +9,10 @@ export default function Plants() {
   const [waterIn, setWaterIn] = useState("");
   const [loading, setLoading] = useState(true);
   const [editingPlant, setEditingPlant] = useState(null);
-  const [image, setImage] = useState(null);
+
+  // ✅ IMAGE STATES
+  const [image, setImage] = useState(null); // preview
+  const [selectedFile, setSelectedFile] = useState(null); // actual file
 
   // 🌿 FETCH PLANTS
   const fetchPlants = async () => {
@@ -57,20 +60,17 @@ export default function Plants() {
 
     fetchPlants();
 
-    // ✅ FIX: no duplicate add
     socket.on("plant_added", (newPlant) => {
-  setPlants((prev) => {
-    // prevent duplicates
-    const exists = prev.some(p => p._id === newPlant._id);
-    if (exists) return prev;
+      setPlants((prev) => {
+        const exists = prev.some((p) => p._id === newPlant._id);
+        if (exists) return prev;
+        return [newPlant, ...prev];
+      });
+    });
 
-    return [newPlant, ...prev];
-  });
-});
-
-  socket.on("plant_deleted", (id) => {
-  setPlants((prev) => prev.filter(p => p._id !== id));
-});
+    socket.on("plant_deleted", (id) => {
+      setPlants((prev) => prev.filter((p) => p._id !== id));
+    });
 
     return () => {
       socket.off("plant_added");
@@ -78,29 +78,45 @@ export default function Plants() {
     };
   }, []);
 
-  // ➕ ADD PLANT
+  // 📷 IMAGE HANDLER
+  const handleImageUpload = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    setSelectedFile(file); // for upload
+    setImage(URL.createObjectURL(file)); // preview
+  };
+
+  // ➕ ADD PLANT (FIXED)
   const addPlant = async () => {
-    if (!name || !waterIn) return;
+    try {
+      const token = localStorage.getItem("token");
 
-    const token = localStorage.getItem("token");
+      const formData = new FormData();
+      formData.append("name", name);
+      formData.append("waterIn", waterIn);
 
-    await fetch(`${API_URL}/plants`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({
-        name,
-        waterIn,
-        image, // ✅ FIX
-      }),
-    });
+      if (selectedFile) {
+        formData.append("image", selectedFile);
+      }
 
-    setName("");
-    setWaterIn("");
-    setImage(null);
-    fetchPlants(); // ✅ refresh
+      await fetch(`${API_URL}/plants`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: formData,
+      });
+
+      setName("");
+      setWaterIn("");
+      setImage(null);
+      setSelectedFile(null);
+
+      fetchPlants();
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   // ❌ DELETE
@@ -114,20 +130,10 @@ export default function Plants() {
       },
     });
 
-    fetchPlants(); // ✅ refresh
+    fetchPlants();
   };
 
-  // image input handler
-const handleImageUpload = (e) => {
-  const file = e.target.files[0];
-  if (!file) return;
-
-  const imageUrl = URL.createObjectURL(file);
-  setImage(imageUrl);
-};
-
-
-  // ✏️ UPDATE
+  // ✏️ UPDATE (UNCHANGED LOGIC)
   const updatePlant = async () => {
     const token = localStorage.getItem("token");
 
@@ -139,7 +145,7 @@ const handleImageUpload = (e) => {
       },
       body: JSON.stringify({
         name: editingPlant.name,
-        waterIn: editingPlant.waterIn, // ✅ FIX
+        waterIn: editingPlant.waterIn,
       }),
     });
 
@@ -165,7 +171,7 @@ const handleImageUpload = (e) => {
       {/* ➕ FORM */}
       <div className="flex flex-col md:flex-row gap-3 mb-6 bg-white p-4 rounded-xl shadow w-full">
         <input
-          className="border p-2 rounded text-lg text-gray-900 w-full focus:outline-none"
+          className="border p-2 rounded text-lg text-gray-900 w-full"
           placeholder="Plant name"
           value={name}
           onChange={(e) => setName(e.target.value)}
@@ -177,27 +183,32 @@ const handleImageUpload = (e) => {
           value={waterIn}
           onChange={(e) => setWaterIn(e.target.value)}
         />
+
+        {/* IMAGE INPUT */}
         <input
-  type="file"
-  accept="image/*"
-  capture="environment"
-  onChange={handleImageUpload}
-  className="hidden"
-  id="imageUpload"
-/>
-{image && (
-  <img
-    src={image}
-    alt="preview"
-    className="w-20 h-20 object-cover rounded-lg"
-  />
-)}
-   <label
-  htmlFor="imageUpload"
-  className="bg-gray-200 px-3 py-2 rounded cursor-pointer hover:bg-gray-300"
->
-  📷 Image
-</label>
+          type="file"
+          accept="image/*"
+          capture="environment"
+          onChange={handleImageUpload}
+          className="hidden"
+          id="imageUpload"
+        />
+
+        {/* PREVIEW */}
+        {image && (
+          <img
+            src={image}
+            alt="preview"
+            className="w-20 h-20 object-cover rounded-lg"
+          />
+        )}
+
+        <label
+          htmlFor="imageUpload"
+          className="bg-gray-200 px-3 py-2 rounded cursor-pointer hover:bg-gray-300"
+        >
+          📷 Image
+        </label>
 
         <button
           onClick={addPlant}
@@ -209,53 +220,49 @@ const handleImageUpload = (e) => {
 
       {/* 🌿 LIST */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 mt-6 w-full">
-        {plants.map((plant, index) => (
-        <div
-  key={plant._id}
-  className="bg-white rounded-2xl shadow-md hover:shadow-xl transition overflow-hidden"
->
-
-  {/* IMAGE */}
-  <img
+        {plants.map((plant) => (
+          <div
+            key={plant._id}
+            className="bg-white rounded-2xl shadow-md hover:shadow-xl transition overflow-hidden"
+          >
+            {/* IMAGE */}
+            <img
   src={
-    plant.image ||
-    `https://source.unsplash.com/400x300/?plant,${plant.name}`
+    plant.image && plant.image.startsWith("http")
+      ? plant.image
+      : "https://via.placeholder.com/400x300?text=No+Image"
   }
   alt="plant"
   className="w-full h-40 object-cover"
 />
 
-  {/* CONTENT */}
-  <div className="p-4">
+            {/* CONTENT */}
+            <div className="p-4">
+              <h3 className="font-semibold text-lg text-gray-900">
+                {plant.name}
+              </h3>
 
-    <h3 className="font-semibold text-lg text-gray-900">
-      {plant.name}
-    </h3>
+              <p className="text-gray-500 text-sm mt-1">
+                💧 Water in {plant.waterIn} days
+              </p>
 
-    <p className="text-gray-500 text-sm mt-1">
-      💧 Water in {plant.waterIn} days
-    </p>
+              <div className="flex justify-between mt-4">
+                <button
+                  onClick={() => setEditingPlant(plant)}
+                  className="text-blue-500 text-sm"
+                >
+                  Edit
+                </button>
 
-    {/* ACTIONS */}
-    <div className="flex justify-between mt-4">
-      <button
-        onClick={() => setEditingPlant(plant)}
-        className="text-blue-500 text-sm"
-      >
-        Edit
-      </button>
-
-      <button
-        onClick={() => deletePlant(plant._id)}
-        className="text-red-500 text-sm"
-      >
-        Delete
-      </button>
-    </div>
-
-  </div>
-</div>  
-  
+                <button
+                  onClick={() => deletePlant(plant._id)}
+                  className="text-red-500 text-sm"
+                >
+                  Delete
+                </button>
+              </div>
+            </div>
+          </div>
         ))}
       </div>
 
@@ -273,7 +280,7 @@ const handleImageUpload = (e) => {
             <h3 className="mb-4 font-semibold">Edit Plant</h3>
 
             <input
-              className="border p-2 w-full mb-2"
+              className="border p-2 w-full mb-2 text-gray-900 bg-white"
               value={editingPlant.name}
               onChange={(e) =>
                 setEditingPlant({
@@ -284,7 +291,7 @@ const handleImageUpload = (e) => {
             />
 
             <input
-              className="border p-2 w-full mb-4"
+              className="border p-2 w-full mb-4  text-gray-900 bg-white"
               value={editingPlant.waterIn}
               onChange={(e) =>
                 setEditingPlant({
