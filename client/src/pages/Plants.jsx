@@ -51,12 +51,12 @@ export default function Plants() {
 
   // 🔌 SOCKET + INITIAL LOAD
   useEffect(() => {
-    const cached = localStorage.getItem("plants");
+   // const cached = localStorage.getItem("plants");
 
-    if (cached) {
-      setPlants(JSON.parse(cached));
-      setLoading(false);
-    }
+   // if (cached) {
+   //   setPlants(JSON.parse(cached));
+   //   setLoading(false);
+   // }
 
     fetchPlants();
 
@@ -108,12 +108,18 @@ export default function Plants() {
         body: formData,
       });
 
+
+const newPlant = await res.json();
+
+// ✅ update UI immediately
+setPlants((prev) => [newPlant, ...prev]);
+
       setName("");
       setWaterIn("");
       setImage(null);
       setSelectedFile(null);
 
-      fetchPlants();
+    //  fetchPlants();
     } catch (err) {
       console.error(err);
     }
