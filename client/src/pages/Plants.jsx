@@ -9,6 +9,8 @@ export default function Plants() {
   const [waterIn, setWaterIn] = useState("");
   const [loading, setLoading] = useState(true);
   const [editingPlant, setEditingPlant] = useState(null);
+  const [dragX, setDragX] = useState(0);
+const [isDragging, setIsDragging] = useState(false);
 
   // 🌿 FETCH PLANTS
   const fetchPlants = async () => {
@@ -115,6 +117,25 @@ export default function Plants() {
     fetchPlants(); // ✅ refresh
   };
 
+  const handleDragStart = () => {
+  setIsDragging(true);
+};
+
+const handleDrag = (e) => {
+  if (!isDragging) return;
+  setDragX((prev) => prev + e.movementX);
+};
+
+const handleDragEnd = (plantId) => {
+  setIsDragging(false);
+
+  if (dragX < -120) {
+    deletePlant(plantId); // existing logic
+  }
+
+  setDragX(0);
+};
+
   // ✏️ UPDATE
   const updatePlant = async () => {
     const token = localStorage.getItem("token");
@@ -151,7 +172,7 @@ export default function Plants() {
       <h2 className="text-2xl font-semibold mb-6">🌱 Your Plants</h2>
 
       {/* ➕ FORM */}
-      <div className="flex flex-col md:flex-row gap-3 mb-6 bg-white/90 backdrop-blur p-4 rounded-xl shadow w-full relative z-0">
+      <div className="flex flex-col md:flex-row gap-3 mb-6 backdrop-blur-lg bg-white/20 border border-white/30 p-4 rounded-xl shadow w-full">
         <input
           className="border p-2 rounded text-lg text-gray-900 w-full focus:outline-none"
           placeholder="Plant name"
@@ -175,34 +196,67 @@ export default function Plants() {
       </div>
 
       {/* 🌿 LIST */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 w-full">
-        {plants.map((plant) => (
+      <div className="flex flex-col items-center mt-6">
+        {plants.map((plant, index) => (
           <div
-            key={plant._id}
-            className="bg-white/90 backdrop-blur p-5 rounded-2xl shadow hover:shadow-xl transition w-full relative z-0"
-          >
-            <h3 className="font-semibold text-lg text-gray-900">{plant.name}</h3>
+  key={plant._id}
+  draggable
+  onDragStart={handleDragStart}
+  onDrag={handleDrag}
+  onDragEnd={() => handleDragEnd(plant._id)}
+  className="w-full max-w-md backdrop-blur-lg bg-white/20 border border-white/30 
+             rounded-2xl p-5 shadow-xl transition-all duration-300 
+             hover:scale-[1.02] hover:shadow-2xl relative cursor-grab active:cursor-grabbing"
+  style={{
+    transform: `translateX(${dragX}px) rotate(${dragX * 0.05}deg)`,
+    marginTop: index === 0 ? "0px" : "-60px",
+    zIndex: plants.length - index,
+    backgroundColor:
+      dragX < -80 ? "rgba(255,0,0,0.2)" :
+      dragX > 80 ? "rgba(0,255,0,0.2)" :
+      "rgba(255,255,255,0.2)"
+  }}
+>
 
-            <p className="text-gray-500 mb-3">
-              💧 {plant.waterIn} days
-            </p>
+  {/* STATUS */}
+  <div className="flex items-center gap-2 mb-2">
+    <span className="w-3 h-3 rounded-full bg-green-400"></span>
+    <span className="text-xs text-white/70">Healthy</span>
+  </div>
 
-            <div className="flex justify-between">
-              <button
-                onClick={() => setEditingPlant(plant)}
-                className="text-blue-500 text-sm"
-              >
-                Edit
-              </button>
+  {/* TITLE */}
+  <h3 className="font-semibold text-lg text-white">
+    {plant.name}
+  </h3>
 
-              <button
-                onClick={() => deletePlant(plant._id)}
-                className="text-red-500 text-sm"
-              >
-                Delete
-              </button>
-            </div>
-          </div>
+  {/* WATER INFO */}
+  <p className="text-white/80 mb-3">
+    💧 {plant.waterIn} days
+  </p>
+
+  {/* ACTIONS */}
+  <div className="flex justify-between mt-3">
+    <button
+      onClick={() => setEditingPlant(plant)}
+      className="text-blue-300 text-sm"
+    >
+      Edit
+    </button>
+
+    <button
+      onClick={() => deletePlant(plant._id)}
+      className="text-red-300 text-sm"
+    >
+      Delete
+    </button>
+  </div>
+
+  {/* SWIPE HINT */}
+  <div className="absolute top-2 right-2 text-xs text-white/60">
+    ← swipe
+  </div>
+
+</div>
         ))}
       </div>
 
