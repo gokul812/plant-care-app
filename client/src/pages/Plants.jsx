@@ -314,7 +314,7 @@ export default function Plants() {
 
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center">
           <div className="bg-white p-6 rounded-xl text-gray-900 shadow w-96">
-            <h3 className="mb-4 font-semibold">Edit Plant</h3>
+            <h3 className="mb-4  font-semibold text-gray-900">Edit Plant</h3>
 
             <input
               className="border p-2 w-full mb-2 text-gray-900 bg-white"
