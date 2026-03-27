@@ -125,10 +125,8 @@ export default function Plants() {
       body: formData,
     });
 
-    const newPlant = await res.json();
+    // const newPlant = await res.json();
 
-    // ✅ update state
-    setPlants((prev) => [newPlant, ...prev]);
 
     setName("");
     setWaterIn("");
