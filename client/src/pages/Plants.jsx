@@ -83,6 +83,11 @@ export default function Plants() {
     const file = e.target.files[0];
     if (!file) return;
 
+     if (file.type === "image/heic" || file.name.endsWith(".heic")) {
+    alert("HEIC format is not fully supported. Please use JPG or PNG.");
+    return;
+  }
+
     setSelectedFile(file); // for upload
     setImage(URL.createObjectURL(file)); // preview
   };
@@ -193,9 +198,8 @@ export default function Plants() {
         <input
           type="file"
           accept="image/*"
-          capture="environment"
           onChange={handleImageUpload}
-          className="hidden"
+          className="opacity-0 absolute w-0 h-0"
           id="imageUpload"
         />
 
