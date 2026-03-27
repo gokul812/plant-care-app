@@ -153,7 +153,7 @@ export default function Plants() {
       {/* ➕ FORM */}
       <div className="flex flex-col md:flex-row gap-3 mb-6 bg-white/90 backdrop-blur p-4 rounded-xl shadow w-full">
         <input
-          className="border p-2 rounded font-semibold text-lg text-gray-900 w-full focus:outline-none"
+          className="border p-2 rounded text-lg text-gray-900 w-full focus:outline-none"
           placeholder="Plant name"
           value={name}
           onChange={(e) => setName(e.target.value)}
