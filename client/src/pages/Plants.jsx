@@ -151,7 +151,7 @@ export default function Plants() {
       <h2 className="text-2xl font-semibold mb-6">🌱 Your Plants</h2>
 
       {/* ➕ FORM */}
-      <div className="flex flex-col md:flex-row gap-3 mb-6 bg-white/90 backdrop-blur p-4 rounded-xl shadow w-full">
+      <div className="flex flex-col md:flex-row gap-3 mb-6 bg-white/90 backdrop-blur p-4 rounded-xl shadow w-full relative z-0">
         <input
           className="border p-2 rounded text-lg text-gray-900 w-full focus:outline-none"
           placeholder="Plant name"
@@ -179,7 +179,7 @@ export default function Plants() {
         {plants.map((plant) => (
           <div
             key={plant._id}
-            className="bg-white/90 backdrop-blur p-5 rounded-2xl shadow hover:shadow-xl transition w-full"
+            className="bg-white/90 backdrop-blur p-5 rounded-2xl shadow hover:shadow-xl transition w-full relative z-0"
           >
             <h3 className="font-semibold text-lg text-gray-900">{plant.name}</h3>
 
