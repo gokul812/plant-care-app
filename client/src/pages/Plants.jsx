@@ -252,51 +252,66 @@ export default function Plants() {
 
       {/* EDIT MODAL */}
       {editPlant && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center">
-          <div className="bg-white p-6 rounded-xl w-96 shadow-2xl opacity-100">
-            <h3 className="mb-4 font-semibold">Edit Plant</h3>
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center">
+    <div className="bg-white text-black p-6 rounded-xl w-96 shadow-2xl">
 
-            <input
-              className="border p-2 w-full mb-2 text-black bg-white"
-              value={editPlant.name}
-              onChange={(e) =>
-                setEditPlant({ ...editPlant, name: e.target.value })
-              }
-            />
+      <h3 className="mb-4 font-semibold text-black">
+        Edit Plant
+      </h3>
 
-            <input
-              className="border p-2 w-full mb-2 text-black bg-white"
-              value={editPlant.waterIn}
-              onChange={(e) =>
-                setEditPlant({ ...editPlant, waterIn: e.target.value })
-              }
-            />
+      <input
+        className="border p-2 w-full mb-2 text-black bg-white placeholder-gray-500"
+        value={editPlant.name}
+        onChange={(e) =>
+          setEditPlant({ ...editPlant, name: e.target.value })
+        }
+      />
 
-            <p className="text-sm mt-2">Change Image</p>
+      <input
+        className="border p-2 w-full mb-2 text-black bg-white placeholder-gray-500"
+        value={editPlant.waterIn}
+        onChange={(e) =>
+          setEditPlant({ ...editPlant, waterIn: e.target.value })
+        }
+      />
 
-            <input
-              type="file"
-              accept="image/*"
-              onChange={(e) => setEditImage(e.target.files[0])}
-              className="mt-2 w-full text-black bg-white border p-2 rounded"
-            />
+      {/* IMAGE INPUT (FIXED BELOW 👇) */}
 
-            {editImage && (
-              <img
-                src={URL.createObjectURL(editImage)}
-                className="w-20 h-20 mt-2 rounded object-cover"
-              />
-            )}
+      <div className="mt-2">
+        <label className="block text-sm font-medium text-black mb-1">
+          Change Image
+        </label>
 
-            <div className="flex justify-between mt-4">
-              <button onClick={updatePlant} className="bg-green-500 text-white px-4 py-1 rounded">
-                Save
-              </button>
+        <input
+          type="file"
+          accept="image/*"
+          onChange={(e) => setEditImage(e.target.files[0])}
+          className="block w-full text-sm text-black border p-2 rounded bg-white"
+        />
+      </div>
 
-              <button onClick={() => setEditPlant(null)} className="text-red-500">
-                Cancel
-              </button>
-            </div>
+      {editImage && (
+        <img
+          src={URL.createObjectURL(editImage)}
+          className="w-20 h-20 mt-3 rounded object-cover"
+        />
+      )}
+
+      <div className="flex justify-between mt-4">
+        <button
+          onClick={updatePlant}
+          className="bg-green-500 text-white px-4 py-1 rounded"
+        >
+          Save
+        </button>
+
+        <button
+          onClick={() => setEditPlant(null)}
+          className="text-red-500"
+        >
+          Cancel
+        </button>
+      </div>
           </div>
         </div>
       )}

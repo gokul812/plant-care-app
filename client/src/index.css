@@ -157,3 +157,8 @@ code {
 .animate-slideLeft {
   animation: slideLeft 0.3s ease;
 }
+
+::selection {
+  background: #22c55e; /* green */
+  color: white;
+}
