@@ -7,7 +7,9 @@ export default function Layout() {
   const navigate = useNavigate();
   const [openSidebar, setOpenSidebar] = useState(false);
   const [touchStartX, setTouchStartX] = useState(0);
-  const [touchEndX, setTouchEndX] = useState(0);
+const [touchEndX, setTouchEndX] = useState(0);
+const [touchStartY, setTouchStartY] = useState(0);
+const [touchEndY, setTouchEndY] = useState(0);
   // 🚪 Logout
   const handleLogout = () => {
     localStorage.removeItem("token");
@@ -20,17 +22,22 @@ export default function Layout() {
     navigate("/login");
   };
 
-  const handleTouchStart = (e) => {
+ const handleTouchStart = (e) => {
   setTouchStartX(e.touches[0].clientX);
+  setTouchStartY(e.touches[0].clientY);
 };
 
 const handleTouchMove = (e) => {
   setTouchEndX(e.touches[0].clientX);
+  setTouchEndY(e.touches[0].clientY);
 };
 
 const handleTouchEnd = () => {
-  if (touchStartX - touchEndX > 50) {
-    // swipe left → close
+  const diffX = touchStartX - touchEndX;
+  const diffY = Math.abs(touchStartY - touchEndY);
+
+  // 👉 Only trigger if horizontal swipe dominates
+  if (diffX > 50 && diffY < 30) {
     setOpenSidebar(false);
   }
 };
@@ -53,10 +60,13 @@ const handleTouchEnd = () => {
     }
   }}
   onTouchEnd={(e) => {
-    if (e.changedTouches[0].clientX - touchStartX > 50) {
-      setOpenSidebar(true);
-    }
-  }}
+  const diffX = e.changedTouches[0].clientX - touchStartX;
+  const diffY = Math.abs(e.changedTouches[0].clientY - touchStartY);
+
+  if (diffX > 50 && diffY < 30) {
+    setOpenSidebar(true);
+  }
+}}
 >
 
       {/* SIDEBAR (Desktop only) */}
