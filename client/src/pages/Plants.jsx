@@ -52,32 +52,27 @@ export default function Plants() {
 
   // 🔌 SOCKET + INITIAL LOAD
   useEffect(() => {
-   // const cached = localStorage.getItem("plants");
+  fetchPlants();
 
-   // if (cached) {
-   //   setPlants(JSON.parse(cached));
-   //   setLoading(false);
-   // }
+  // 🔥 REMOVE OLD LISTENERS FIRST
+  socket.off("plant_added");
+  socket.off("plant_deleted");
 
-    fetchPlants();
-
-    socket.on("plant_added", (newPlant) => {
-      setPlants((prev) => {
-        const exists = prev.some((p) => p._id === newPlant._id);
-        if (exists) return prev;
-        return [newPlant, ...prev];
-      });
+  // 🔥 ADD CLEAN LISTENERS
+  socket.on("plant_added", (newPlant) => {
+      console.log("PLANT ADDED EVENT"); // 👀 check count
+    setPlants((prev) => {
+      const exists = prev.some((p) => p._id === newPlant._id);
+      if (exists) return prev;
+      return [newPlant, ...prev];
     });
+  });
 
-    socket.on("plant_deleted", (id) => {
-      setPlants((prev) => prev.filter((p) => p._id !== id));
-    });
+  socket.on("plant_deleted", (id) => {
+    setPlants((prev) => prev.filter((p) => p._id !== id));
+  });
 
-    return () => {
-      socket.off("plant_added");
-      socket.off("plant_deleted");
-    };
-  }, []);
+}, []);
 
   // 📷 IMAGE HANDLER
   const handleImageUpload = (e) => {
