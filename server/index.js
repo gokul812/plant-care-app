@@ -43,7 +43,7 @@ app.use(
   cors({
     origin: [
       "http://localhost:5173",
-      "https://plant-care-app-zefq.vercel.app",
+      "https://plant-care-zefq.vercel.app",
     ],
     credentials: true,
   })
