@@ -5,6 +5,7 @@ const API_URL = import.meta.env.VITE_API_URL;
 export default function Notifications() {
   const [notifications, setNotifications] = useState([]);
   const [open, setOpen] = useState(false);
+  const [toasts, setToasts] = useState([]);
 
   useEffect(() => {
     socket.on("plant_added", (plant) => {
@@ -45,6 +46,19 @@ export default function Notifications() {
       if (prev.find((n) => n._id === notif._id)) return prev;
       return [notif, ...prev];
     });
+    // 🔔 ADD TOAST
+  const toast = {
+    id: Date.now(),
+    message: notif.message || notif.text || "New notification",
+  };
+
+  setToasts((prev) => [toast, ...prev]);
+
+  // ⏱ AUTO REMOVE (3 sec)
+  setTimeout(() => {
+    setToasts((prev) => prev.filter((t) => t.id !== toast.id));
+  }, 3000);
+
 
     const audio = new Audio("/notify.mp3");
     audio.play();
@@ -74,8 +88,22 @@ export default function Notifications() {
   // 🔴 unread count
   const unreadCount = notifications.filter((n) => !n.read).length;
 
+const Toasts = () => (
+  <div className="fixed top-5 right-5 z-[99999] space-y-3">
+    {toasts.map((t) => (
+      <div
+        key={t.id}
+        className="bg-white text-gray-900 px-4 py-3 rounded-lg shadow-lg border animate-slideIn"
+      >
+        {t.message}
+      </div>
+    ))}
+  </div>
+);
+
 return (
     <div className="relative">
+      <Toasts />
       {/* 🔔 Bell */}
       <button onClick={() => setOpen(!open)} className="text-xl relative">
         🔔
@@ -89,7 +117,7 @@ return (
 
       {/* Dropdown */}
       {open && (
-        <div className="absolute right-0 mt-3 w-80 bg-white shadow-2xl rounded-xl p-4 z-[99999] text-gray-900 border">
+        <div className="absolute right-0 mt-3 w-80 bg-white shadow-2xl rounded-xl p-4 z-[99999] text-gray-900 border animate-dropdown">
           <h4 className="font-semibold text-lg text-gray-900 mb-2">Notifications</h4>
 
           {notifications.length === 0 ? (
@@ -100,11 +128,17 @@ return (
                 <li
   key={n._id}
   onClick={() => markAsRead(n._id)}
-  className={`p-2 rounded cursor-pointer text-gray-800 ${
+  className={`p-3 rounded-lg cursor-pointer flex justify-between items-center transition ${
     n.read ? "bg-gray-100" : "bg-green-100"
   }`}
 >
-  {n.message || n.text || "Notification"}
+  <span>{n.message || n.text}</span>
+
+  {!n.read && (
+    <span className="text-xs text-green-700 font-semibold">
+      NEW
+    </span>
+  )}
 </li>
               ))}
             </ul>

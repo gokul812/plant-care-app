@@ -115,7 +115,22 @@ code {
   box-sizing: border-box;
 }
 
-@keyframes slideDown {
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(40px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.animate-slideIn {
+  animation: slideIn 0.3s ease;
+}
+
+@keyframes dropdown {
   from {
     opacity: 0;
     transform: translateY(-8px);
@@ -127,5 +142,5 @@ code {
 }
 
 .animate-dropdown {
-  animation: slideDown 0.2s ease;
+  animation: dropdown 0.2s ease;
 }
