@@ -9,6 +9,7 @@ export default function Plants() {
   const [waterIn, setWaterIn] = useState("");
   const [loading, setLoading] = useState(true);
   const [editingPlant, setEditingPlant] = useState(null);
+  const [adding, setAdding] = useState(false);
 
   // ✅ IMAGE STATES
   const [image, setImage] = useState(null); // preview
@@ -94,7 +95,17 @@ export default function Plants() {
 
   // ➕ ADD PLANT (FIXED)
   const addPlant = async () => {
+
+     if (adding) return; // 🚫 prevent double click
+
+  if (!name.trim() || !waterIn.trim()) {
+    alert("Please fill all fields");
+    return;
+  }
+
   try {
+    setAdding(true); // 🔒 lock button
+
     const token = localStorage.getItem("token");
 
     const formData = new FormData();
@@ -126,6 +137,8 @@ export default function Plants() {
 
   } catch (err) {
     console.error(err);
+  } finally {
+    setAdding(false); // 🔓 unlock
   }
 };
 
@@ -220,11 +233,16 @@ export default function Plants() {
         </label>
 
         <button
-          onClick={addPlant}
-          className="bg-green-500 text-white px-4 rounded hover:bg-green-600"
-        >
-          Add
-        </button>
+  onClick={addPlant}
+  disabled={adding}
+  className={`px-4 rounded ${
+    adding
+      ? "bg-gray-400 cursor-not-allowed text-white"
+      : "bg-green-500 hover:bg-green-600 text-white"
+  }`}
+>
+  {adding ? "Adding..." : "Add"}
+</button>
       </div>
 
       {/* 🌿 LIST */}
