@@ -311,8 +311,9 @@ export default function Plants() {
 
       {/* ✏️ EDIT MODAL */}
       {editPlant && (
+
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center">
-          <div className="bg-white p-6 rounded-xl shadow w-80">
+          <div className="bg-white p-6 rounded-xl text-gray-900 shadow w-96">
             <h3 className="mb-4 font-semibold">Edit Plant</h3>
 
             <input
@@ -336,13 +337,17 @@ export default function Plants() {
                 })
               }
             />
-
+            <p className="text-sm text-gray-500 mt-2">Change Image</p>
             <input
   type="file"
   accept="image/*"
   onChange={(e) => setEditImage(e.target.files[0])}
-  className="mt-2"
+  className="mt-2 w-full"
 />
+  <img
+    src={URL.createObjectURL(editImage)}
+    className="w-20 h-20 object-cover mt-2 rounded"
+  />
 
             <div className="flex justify-between">
               <button
