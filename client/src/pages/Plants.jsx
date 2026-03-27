@@ -253,11 +253,11 @@ export default function Plants() {
       {/* EDIT MODAL */}
       {editPlant && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center">
-          <div className="bg-white p-6 rounded-xl w-96">
+          <div className="bg-white p-6 rounded-xl w-96 shadow-2xl opacity-100">
             <h3 className="mb-4 font-semibold">Edit Plant</h3>
 
             <input
-              className="border p-2 w-full mb-2"
+              className="border p-2 w-full mb-2 text-black bg-white"
               value={editPlant.name}
               onChange={(e) =>
                 setEditPlant({ ...editPlant, name: e.target.value })
@@ -265,7 +265,7 @@ export default function Plants() {
             />
 
             <input
-              className="border p-2 w-full mb-2"
+              className="border p-2 w-full mb-2 text-black bg-white"
               value={editPlant.waterIn}
               onChange={(e) =>
                 setEditPlant({ ...editPlant, waterIn: e.target.value })
@@ -278,7 +278,7 @@ export default function Plants() {
               type="file"
               accept="image/*"
               onChange={(e) => setEditImage(e.target.files[0])}
-              className="mt-2 w-full"
+              className="mt-2 w-full text-black bg-white border p-2 rounded"
             />
 
             {editImage && (
