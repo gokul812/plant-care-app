@@ -9,7 +9,8 @@ export default function Plants() {
   const [name, setName] = useState("");
   const [waterIn, setWaterIn] = useState("");
   const [loading, setLoading] = useState(true);
-  const [editingPlant, setEditingPlant] = useState(null);
+  const [editPlant, setEditPlant] = useState(null);
+  const [editImage, setEditImage] = useState(null);
   const [adding, setAdding] = useState(false);
 
   // ✅ IMAGE STATES
@@ -151,26 +152,32 @@ export default function Plants() {
   };
 
   // ✏️ UPDATE (UNCHANGED LOGIC)
-  const updatePlant = async () => {
-    const token = localStorage.getItem("token");
+ const updatePlant = async () => {
+  const token = localStorage.getItem("token");
 
-    const res = await fetch(`${API_URL}/plants/${editingPlant._id}`, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({
-        name: editingPlant.name,
-        waterIn: editingPlant.waterIn,
-      }),
-    });
+  const formData = new FormData();
+  formData.append("name", editingPlant.name);
+  formData.append("waterIn", editingPlant.waterIn);
 
-    if (res.ok) {
-      setEditingPlant(null);
-      fetchPlants();
-    }
-  };
+  // ✅ ONLY ADD IMAGE IF SELECTED
+  if (editImage) {
+    formData.append("image", editImage);
+  }
+
+  const res = await fetch(`${API_URL}/plants/${editingPlant._id}`, {
+    method: "PUT",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+    body: formData,
+  });
+
+  if (res.ok) {
+    setEditingPlant(null);
+    setEditImage(null); // ✅ reset
+    fetchPlants();
+  }
+};
 
   // ⏳ LOADING
   if (loading) {
@@ -329,6 +336,13 @@ console.log("IMAGE VALUE:", plant.image);
                 })
               }
             />
+
+            <input
+  type="file"
+  accept="image/*"
+  onChange={(e) => setEditImage(e.target.files[0])}
+  className="mt-2"
+/>
 
             <div className="flex justify-between">
               <button
