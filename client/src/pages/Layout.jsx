@@ -96,7 +96,7 @@ export default function Layout() {
       </div>
 
       {/* MAIN CONTENT */}
-      <div className="flex-1 flex flex-col overflow-hidden">
+      <div className="flex-1 flex flex-col">
 
         {/* MOBILE HEADER */}
         <div className="md:hidden flex justify-between items-center p-4 text-white backdrop-blur-lg bg-white/10 border-b border-white/20">
@@ -107,7 +107,7 @@ export default function Layout() {
         <div className="flex-1 p-4 md:p-6 text-white overflow-y-auto">
 
           {/* TOP BAR */}
-          <div className="flex justify-end mb-4 backdrop-blur-lg bg-white/10 px-4 py-2 rounded-xl border border-white/20">
+          <div className="flex justify-end mb-4 backdrop-blur-lg bg-white/10 px-4 py-2 rounded-xl border border-white/20 relative">
             <Notifications />
           </div>
 

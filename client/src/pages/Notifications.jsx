@@ -75,7 +75,7 @@ export default function Notifications() {
   const unreadCount = notifications.filter((n) => !n.read).length;
 
 return (
-    <div className="fixed top-16 right-6 w-80 bg-white shadow-2xl rounded-xl p-4 z-[9999] text-gray-900 border animate-fadeIn">
+    <div className="relative">
       {/* 🔔 Bell */}
       <button onClick={() => setOpen(!open)} className="text-xl relative">
         🔔
@@ -89,7 +89,7 @@ return (
 
       {/* Dropdown */}
       {open && (
-        <div className="absolute right-0 mt-2 w-72 bg-white shadow-lg rounded-xl p-3 z-50 text-gray-900">
+        <div className="absolute right-0 mt-3 w-80 bg-white shadow-2xl rounded-xl p-4 z-[9999] text-gray-900 border">
           <h4 className="font-semibold text-lg text-gray-900 mb-2">Notifications</h4>
 
           {notifications.length === 0 ? (
