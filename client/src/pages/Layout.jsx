@@ -1,10 +1,11 @@
 import { Outlet, NavLink, useNavigate } from "react-router-dom";
 import { LayoutDashboard, Leaf, Settings } from "lucide-react";
 import Notifications from "./Notifications";
+import { useState } from "react";
 
 export default function Layout() {
   const navigate = useNavigate();
-
+  const [openSidebar, setOpenSidebar] = useState(false);
   // 🚪 Logout
   const handleLogout = () => {
     localStorage.removeItem("token");
@@ -100,8 +101,56 @@ export default function Layout() {
 
         {/* MOBILE HEADER */}
         <div className="md:hidden flex justify-between items-center p-4 text-white backdrop-blur-lg bg-white/10 border-b border-white/20">
-          <h1 className="text-lg font-bold">🌿 Plant Care</h1>
-        </div>
+
+  <button onClick={() => setOpenSidebar(true)} className="text-2xl">
+    ☰
+  </button>
+
+  <h1 className="text-lg font-bold">🌿 Plant Care</h1>
+
+</div>
+{openSidebar && (
+  <div className="fixed inset-0 z-[9999] flex">
+
+    {/* Overlay */}
+    <div
+      className="absolute inset-0 bg-black/50"
+      onClick={() => setOpenSidebar(false)}
+    ></div>
+
+    {/* Sidebar */}
+    <div className="relative w-64 bg-white text-gray-900 p-5 shadow-lg">
+
+      <h1 className="text-xl font-bold mb-6 text-green-600">
+        🌿 Plant Care
+      </h1>
+
+      <nav className="space-y-3">
+
+        <NavLink to="/" onClick={() => setOpenSidebar(false)}>
+          Dashboard
+        </NavLink>
+
+        <NavLink to="/plants" onClick={() => setOpenSidebar(false)}>
+          Plants
+        </NavLink>
+
+        <NavLink to="/settings" onClick={() => setOpenSidebar(false)}>
+          Settings
+        </NavLink>
+
+      </nav>
+
+      <button
+        onClick={handleLogout}
+        className="mt-6 bg-red-500 text-white px-3 py-2 rounded w-full"
+      >
+        Logout
+      </button>
+    </div>
+  </div>
+)}
+
 
         {/* CONTENT AREA */}
         <div className="flex-1 p-4 md:p-6 text-white overflow-y-auto">

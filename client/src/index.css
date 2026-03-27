@@ -144,3 +144,16 @@ code {
 .animate-dropdown {
   animation: dropdown 0.2s ease;
 }
+
+@keyframes slideLeft {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+.animate-slideLeft {
+  animation: slideLeft 0.3s ease;
+}
