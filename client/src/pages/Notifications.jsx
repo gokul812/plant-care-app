@@ -75,7 +75,7 @@ export default function Notifications() {
   const unreadCount = notifications.filter((n) => !n.read).length;
 
 return (
-    <div className="relative">
+    <div className="fixed top-16 right-6 w-80 bg-white shadow-2xl rounded-xl p-4 z-[9999] text-gray-900 border animate-fadeIn">
       {/* 🔔 Bell */}
       <button onClick={() => setOpen(!open)} className="text-xl relative">
         🔔
