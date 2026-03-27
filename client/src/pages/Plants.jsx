@@ -252,11 +252,11 @@ export default function Plants() {
   src={
     plant.image && plant.image.startsWith("http")
       ? plant.image
-      : "/default-plant.jpg"
+      : defaultPlant
   }
   alt="plant"
   onError={(e) => {
-    e.target.src = "/default-plant.jpg";
+    e.target.src = defaultPlant;
   }}
   className="w-full h-full object-cover md:object-contain"
 />
