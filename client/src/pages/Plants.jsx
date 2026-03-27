@@ -160,7 +160,7 @@ export default function Plants() {
         />
 
         <input
-          className="border p-2 rounded w-full"
+          className="border p-2 rounded text-lg text-gray-900 w-full"
           placeholder="Water in days"
           value={waterIn}
           onChange={(e) => setWaterIn(e.target.value)}
