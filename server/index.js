@@ -153,7 +153,9 @@ app.post("/api/plants", authMiddleware, upload.single("image"), async (req, res)
       userId: req.user.id,
       name: req.body.name,
       waterIn: req.body.waterIn,
-      image: req.file ? req.file.path : null, // ✅ important
+     image: req.file
+  ? `https://plant-care-app-fyh5.onrender.com/${req.file.path}`
+  : null,// ✅ important
     });
 
     // 🔥 REAL-TIME EMIT

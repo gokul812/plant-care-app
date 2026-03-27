@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { socket } from "../socket";
-import defaultPlant from "../assets/default-plant.jpg";
+// import defaultPlant from "../assets/default-plant.jpg";
 
 const API_URL = "https://plant-care-app-fyh5.onrender.com/api";
 
@@ -248,18 +248,21 @@ export default function Plants() {
           >
             {/* IMAGE */}
           <div className="w-full h-48 md:h-52 overflow-hidden bg-gray-100 rounded-t-2xl">
-  <img
+ <img
   src={
-    plant.image && plant.image.startsWith("http")
+    plant.image &&
+    typeof plant.image === "string" &&
+    plant.image.startsWith("http")
       ? plant.image
-      : defaultPlant
+      : "/default-plant.jpg"
   }
   alt="plant"
   onError={(e) => {
-    e.target.src = defaultPlant;
+    e.target.src = "/default-plant.jpg";
   }}
   className="w-full h-full object-cover md:object-contain"
 />
+console.log("IMAGE VALUE:", plant.image);
 </div>
 
             {/* CONTENT */}
