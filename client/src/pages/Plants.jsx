@@ -226,11 +226,11 @@ export default function Plants() {
             className="bg-white rounded-2xl shadow-md hover:shadow-xl transition overflow-hidden"
           >
             {/* IMAGE */}
-            <img
+           <img
   src={
     plant.image && plant.image.startsWith("http")
       ? plant.image
-      : "https://via.placeholder.com/400x300?text=No+Image"
+      : `https://source.unsplash.com/400x300/?plant,${plant.name}`
   }
   alt="plant"
   className="w-full h-40 object-cover"

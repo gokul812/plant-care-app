@@ -33,6 +33,7 @@ export default function Notifications() {
 
   // 📥 load existing notifications
   const fetchNotifications = async () => {
+   
     const res = await fetch(`${API_URL}/api/notifications`);
     const data = await res.json();
     setNotifications(data);
@@ -73,10 +74,12 @@ export default function Notifications() {
 }, []);
 
   // ✅ mark as read
-  const markAsRead = async (id) => {
-    await fetch(`${API_URL}/api/notifications/${id}`, {
-      method: "PUT",
-    });
+ const markAsRead = async (id) => {
+  if (!id) return; // ✅ ADD THIS LINE
+
+  await fetch(`${API_URL}/api/notifications/${id}`, {
+    method: "PUT",
+  });
 
     setNotifications((prev) =>
       prev.map((n) =>
@@ -126,8 +129,8 @@ return (
             <ul className="space-y-2 text-sm max-h-64 overflow-y-auto">
               {notifications.map((n) => (
                 <li
-  key={n._id}
-  onClick={() => markAsRead(n._id)}
+ key={n._id || n.id}
+    onClick={() => markAsRead(n._id)}
   className={`p-3 rounded-lg cursor-pointer flex justify-between items-center transition ${
     n.read ? "bg-gray-100" : "bg-green-100"
   }`}

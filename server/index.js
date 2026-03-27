@@ -9,6 +9,8 @@ import Notification from "./models/Notification.js";
 import User from "./models/User.js";
 import upload from "./middleware/upload.js";
 
+
+const upload = require("./middleware/upload");
 const app = express();
 const server = http.createServer(app);
 
@@ -146,10 +148,12 @@ app.get("/api/plants", authMiddleware, async (req, res) => {
 // ADD plant
 app.post("/api/plants", authMiddleware, upload.single("image"), async (req, res) => {
   try {
+    console.log("FILE:", req.file); // debug
     const plant = await Plant.create({
-      ...req.body,
-      userId: req.user.id,
-      image: req.file?.path,
+      user: req.user,
+      name: req.body.name,
+      waterIn: req.body.waterIn,
+      image: req.file ? req.file.path : "", // ✅ important
     });
 
     // 🔥 REAL-TIME EMIT
