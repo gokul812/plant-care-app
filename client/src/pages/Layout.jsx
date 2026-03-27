@@ -125,19 +125,49 @@ export default function Layout() {
         🌿 Plant Care
       </h1>
 
-      <nav className="space-y-3">
+      <nav className="flex flex-col space-y-3">
 
-        <NavLink to="/" onClick={() => setOpenSidebar(false)}>
-          Dashboard
-        </NavLink>
+        <NavLink
+  to="/"
+  onClick={() => setOpenSidebar(false)}
+  className={({ isActive }) =>
+  `block p-3 rounded-lg ${
+    isActive
+      ? "bg-green-100 text-green-700 font-semibold"
+      : "hover:bg-gray-100"
+  }`
+}
+>
+  Dashboard
+</NavLink>
 
-        <NavLink to="/plants" onClick={() => setOpenSidebar(false)}>
-          Plants
-        </NavLink>
+<NavLink
+  to="/plants"
+  onClick={() => setOpenSidebar(false)}
+  className={({ isActive }) =>
+  `block p-3 rounded-lg ${
+    isActive
+      ? "bg-green-100 text-green-700 font-semibold"
+      : "hover:bg-gray-100"
+  }`
+}
+>
+  Plants
+</NavLink>
 
-        <NavLink to="/settings" onClick={() => setOpenSidebar(false)}>
-          Settings
-        </NavLink>
+<NavLink
+  to="/settings"
+  onClick={() => setOpenSidebar(false)}
+  className={({ isActive }) =>
+  `block p-3 rounded-lg ${
+    isActive
+      ? "bg-green-100 text-green-700 font-semibold"
+      : "hover:bg-gray-100"
+  }`
+}
+>
+  Settings
+</NavLink>
 
       </nav>
 
