@@ -231,7 +231,7 @@ export default function Plants() {
             className="bg-white rounded-2xl shadow-md hover:shadow-xl transition overflow-hidden"
           >
             {/* IMAGE */}
-          <div className="w-full h-40 md:h-48 bg-gray-100 flex items-center justify-center overflow-hidden rounded-t-2xl">
+          <div className="w-full h-48 md:h-52 overflow-hidden bg-gray-100 rounded-t-2xl">
   <img
     src={
       plant.image && plant.image.startsWith("http")
@@ -239,7 +239,7 @@ export default function Plants() {
         : `https://source.unsplash.com/400x300/?plant,${plant.name}`
     }
     alt="plant"
-    className="max-w-full max-h-full object-contain"
+    className="w-full h-full object-cover md:object-contain"
   />
 </div>
 
