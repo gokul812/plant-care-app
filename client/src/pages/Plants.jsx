@@ -249,14 +249,17 @@ export default function Plants() {
             {/* IMAGE */}
           <div className="w-full h-48 md:h-52 overflow-hidden bg-gray-100 rounded-t-2xl">
   <img
-    src={
-      plant.image && plant.image.startsWith("http")
-        ? plant.image
-        : defaultPlant
-    }
-    alt="plant"
-    className="w-full h-full object-cover md:object-contain"
-  />
+  src={
+    plant.image && plant.image.startsWith("http")
+      ? plant.image
+      : "/default-plant.jpg"
+  }
+  alt="plant"
+  onError={(e) => {
+    e.target.src = "/default-plant.jpg";
+  }}
+  className="w-full h-full object-cover md:object-contain"
+/>
 </div>
 
             {/* CONTENT */}
