@@ -89,24 +89,40 @@ export default function Plants() {
 
   // ➕ ADD PLANT (FIXED)
   const addPlant = async () => {
-    try {
-      const token = localStorage.getItem("token");
+  try {
+    const token = localStorage.getItem("token");
 
-      const formData = new FormData();
-      formData.append("name", name);
-      formData.append("waterIn", waterIn);
+    const formData = new FormData();
+    formData.append("name", name);
+    formData.append("waterIn", waterIn);
 
-      if (selectedFile) {
-        formData.append("image", selectedFile);
-      }
+    if (selectedFile) {
+      formData.append("image", selectedFile);
+    }
 
-      await fetch(`${API_URL}/plants`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        body: formData,
-      });
+    // ✅ FIX: define res
+    const res = await fetch(`${API_URL}/plants`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      body: formData,
+    });
+
+    const newPlant = await res.json();
+
+    // ✅ update state
+    setPlants((prev) => [newPlant, ...prev]);
+
+    setName("");
+    setWaterIn("");
+    setImage(null);
+    setSelectedFile(null);
+
+  } catch (err) {
+    console.error(err);
+  }
+};
 
 
 const newPlant = await res.json();
