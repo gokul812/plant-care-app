@@ -7,6 +7,7 @@ import http from "http";
 import { Server } from "socket.io";
 import Notification from "./models/Notification.js";
 import User from "./models/User.js";
+import upload from "./middleware/upload.js";
 
 const app = express();
 const server = http.createServer(app);
@@ -57,6 +58,7 @@ const plantSchema = new mongoose.Schema({
   name: String,
   waterIn: String,
   userId: String,
+  image: String,
 });
 
 const Plant = mongoose.model("Plant", plantSchema);
@@ -142,11 +144,12 @@ app.get("/api/plants", authMiddleware, async (req, res) => {
 });
 
 // ADD plant
-app.post("/api/plants", authMiddleware, async (req, res) => {
+app.post("/api/plants", authMiddleware, upload.single("image"), async (req, res) => {
   try {
     const plant = await Plant.create({
       ...req.body,
       userId: req.user.id,
+      image: req.file?.path,
     });
 
     // 🔥 REAL-TIME EMIT
@@ -191,8 +194,15 @@ app.delete("/api/plants/:id", authMiddleware, async (req, res) => {
 });
 
 // UPDATE plant
-app.put("/api/plants/:id", authMiddleware, async (req, res) => {
+app.put("/api/plants/:id", authMiddleware, upload.single("image"), async (req, res) => {
   try {
+    const updateData = {
+        ...req.body,
+      };
+
+      if (req.file) {
+        updateData.image = req.file.path;
+      }
     const updated = await Plant.findByIdAndUpdate(
       req.params.id,
       req.body,
