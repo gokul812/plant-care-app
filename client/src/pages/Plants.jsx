@@ -147,13 +147,13 @@ export default function Plants() {
   }
 
   return (
-    <div className="p-6">
+    <div className="w-full">
       <h2 className="text-2xl font-semibold mb-6">🌱 Your Plants</h2>
 
       {/* ➕ FORM */}
-      <div className="flex gap-3 mb-6 bg-white p-4 rounded-xl shadow">
+      <div className="flex flex-col md:flex-row gap-3 mb-6 bg-white/90 backdrop-blur p-4 rounded-xl shadow w-full">
         <input
-          className="border p-2 rounded w-full"
+          className="border p-2 rounded w-full focus:outline-none"
           placeholder="Plant name"
           value={name}
           onChange={(e) => setName(e.target.value)}
@@ -175,13 +175,13 @@ export default function Plants() {
       </div>
 
       {/* 🌿 LIST */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 w-full">
         {plants.map((plant) => (
           <div
             key={plant._id}
-            className="bg-white p-5 rounded-2xl shadow hover:shadow-lg transition"
+            className="bg-white/90 backdrop-blur p-5 rounded-2xl shadow hover:shadow-xl transition w-full"
           >
-            <h3 className="font-semibold text-lg">{plant.name}</h3>
+            <h3 className="font-semibold text-lg text-gray-900">{plant.name}</h3>
 
             <p className="text-gray-500 mb-3">
               💧 {plant.waterIn} days
