@@ -156,15 +156,15 @@ export default function Plants() {
   const token = localStorage.getItem("token");
 
   const formData = new FormData();
-  formData.append("name", editingPlant.name);
-  formData.append("waterIn", editingPlant.waterIn);
+  formData.append("name", editPlant.name);
+  formData.append("waterIn", editPlant.waterIn);
 
   // ✅ ONLY ADD IMAGE IF SELECTED
   if (editImage) {
     formData.append("image", editImage);
   }
 
-  const res = await fetch(`${API_URL}/plants/${editingPlant._id}`, {
+  const res = await fetch(`${API_URL}/plants/${editPlant._id}`, {
     method: "PUT",
     headers: {
       Authorization: `Bearer ${token}`,
@@ -173,7 +173,7 @@ export default function Plants() {
   });
 
   if (res.ok) {
-    setEditingPlant(null);
+    setEditPlant(null);
     setEditImage(null); // ✅ reset
     fetchPlants();
   }
@@ -269,7 +269,7 @@ export default function Plants() {
   }}
   className="w-full h-full object-cover md:object-contain"
 />
-console.log("IMAGE VALUE:", plant.image);
+
 </div>
 
             {/* CONTENT */}
@@ -284,7 +284,7 @@ console.log("IMAGE VALUE:", plant.image);
 
               <div className="flex justify-between mt-4">
                 <button
-                  onClick={() => setEditingPlant(plant)}
+                  onClick={() => setEditPlant(plant)}
                   className="text-blue-500 text-sm"
                 >
                   Edit
@@ -310,16 +310,16 @@ console.log("IMAGE VALUE:", plant.image);
       )}
 
       {/* ✏️ EDIT MODAL */}
-      {editingPlant && (
+      {editPlant && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center">
           <div className="bg-white p-6 rounded-xl shadow w-80">
             <h3 className="mb-4 font-semibold">Edit Plant</h3>
 
             <input
               className="border p-2 w-full mb-2 text-gray-900 bg-white"
-              value={editingPlant.name}
+              value={editPlant.name}
               onChange={(e) =>
-                setEditingPlant({
+                setEditPlant({
                   ...editingPlant,
                   name: e.target.value,
                 })
@@ -330,7 +330,7 @@ console.log("IMAGE VALUE:", plant.image);
               className="border p-2 w-full mb-4  text-gray-900 bg-white"
               value={editingPlant.waterIn}
               onChange={(e) =>
-                setEditingPlant({
+                setEditPlant({
                   ...editingPlant,
                   waterIn: e.target.value,
                 })
@@ -353,7 +353,7 @@ console.log("IMAGE VALUE:", plant.image);
               </button>
 
               <button
-                onClick={() => setEditingPlant(null)}
+                onClick={() => setEditPlant(null)}
                 className="text-red-500"
               >
                 Cancel
