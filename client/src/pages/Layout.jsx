@@ -6,6 +6,8 @@ import { useState } from "react";
 export default function Layout() {
   const navigate = useNavigate();
   const [openSidebar, setOpenSidebar] = useState(false);
+  const [touchStartX, setTouchStartX] = useState(0);
+  const [touchEndX, setTouchEndX] = useState(0);
   // 🚪 Logout
   const handleLogout = () => {
     localStorage.removeItem("token");
@@ -18,6 +20,21 @@ export default function Layout() {
     navigate("/login");
   };
 
+  const handleTouchStart = (e) => {
+  setTouchStartX(e.touches[0].clientX);
+};
+
+const handleTouchMove = (e) => {
+  setTouchEndX(e.touches[0].clientX);
+};
+
+const handleTouchEnd = () => {
+  if (touchStartX - touchEndX > 50) {
+    // swipe left → close
+    setOpenSidebar(false);
+  }
+};
+
   return (
   <div
     className="flex h-screen w-full relative bg-cover bg-center"
@@ -28,7 +45,19 @@ export default function Layout() {
     {/* overlay */}
     <div className="absolute inset-0 bg-black/40 backdrop-blur-sm"></div>
 
-    <div className="flex w-full h-full relative z-10">
+   <div
+  className="flex w-full h-full relative z-10"
+  onTouchStart={(e) => {
+    if (e.touches[0].clientX < 30) {
+      setTouchStartX(e.touches[0].clientX);
+    }
+  }}
+  onTouchEnd={(e) => {
+    if (e.changedTouches[0].clientX - touchStartX > 50) {
+      setOpenSidebar(true);
+    }
+  }}
+>
 
       {/* SIDEBAR (Desktop only) */}
       <div className="hidden md:flex md:w-64 backdrop-blur-xl bg-white/10 border border-white/20 
@@ -119,7 +148,10 @@ export default function Layout() {
     ></div>
 
     {/* Sidebar */}
-    <div className="relative w-64 bg-white text-gray-900 p-5 shadow-lg">
+    <div className="relative w-64 bg-white text-gray-900 p-5 shadow-lg animate-slideLeft"
+  onTouchStart={handleTouchStart}
+  onTouchMove={handleTouchMove}
+  onTouchEnd={handleTouchEnd}>
 
       <h1 className="text-xl font-bold mb-6 text-green-600">
         🌿 Plant Care
