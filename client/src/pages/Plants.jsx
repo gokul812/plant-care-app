@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { socket } from "../socket";
 
-const API_URL = "https://plant-care-app-fyh5.onrender.com/api";
+const API_URL = import.meta.env.VITE_API_URL;
 
 export default function Plants() {
   const [plants, setPlants] = useState([]);
@@ -16,6 +16,10 @@ export default function Plants() {
   const [image, setImage] = useState(null);
   const [selectedFile, setSelectedFile] = useState(null);
 
+  // SEARCH & SORT
+  const [search, setSearch] = useState("");
+  const [sortBy, setSortBy] = useState("newest");
+
   // FETCH
   const fetchPlants = async () => {
     try {
@@ -26,7 +30,7 @@ export default function Plants() {
         return;
       }
 
-      const res = await fetch(`${API_URL}/plants`, {
+      const res = await fetch(`${API_URL}/api/plants`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -107,7 +111,7 @@ export default function Plants() {
         formData.append("image", selectedFile);
       }
 
-      await fetch(`${API_URL}/plants`, {
+      await fetch(`${API_URL}/api/plants`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -130,7 +134,7 @@ export default function Plants() {
   const deletePlant = async (id) => {
     const token = localStorage.getItem("token");
 
-    await fetch(`${API_URL}/plants/${id}`, {
+    await fetch(`${API_URL}/api/plants/${id}`, {
       method: "DELETE",
       headers: {
         Authorization: `Bearer ${token}`,
@@ -140,7 +144,7 @@ export default function Plants() {
     fetchPlants();
   };
 
-  // UPDATE (FIXED IMAGE SUPPORT)
+  // UPDATE
   const updatePlant = async () => {
     const token = localStorage.getItem("token");
 
@@ -152,7 +156,7 @@ export default function Plants() {
       formData.append("image", editImage);
     }
 
-    const res = await fetch(`${API_URL}/plants/${editPlant._id}`, {
+    const res = await fetch(`${API_URL}/api/plants/${editPlant._id}`, {
       method: "PUT",
       headers: {
         Authorization: `Bearer ${token}`,
@@ -166,6 +170,17 @@ export default function Plants() {
       fetchPlants();
     }
   };
+
+  // FILTERED & SORTED PLANTS
+  const filtered = plants
+    .filter((p) => p.name.toLowerCase().includes(search.toLowerCase()))
+    .sort((a, b) => {
+      if (sortBy === "name-asc") return a.name.localeCompare(b.name);
+      if (sortBy === "name-desc") return b.name.localeCompare(a.name);
+      if (sortBy === "water-asc") return Number(a.waterIn) - Number(b.waterIn);
+      if (sortBy === "water-desc") return Number(b.waterIn) - Number(a.waterIn);
+      return 0; // "newest" — preserve fetch order
+    });
 
   if (loading) {
     return <div className="text-center mt-10">Loading plants...</div>;
@@ -187,6 +202,8 @@ export default function Plants() {
         <input
           className="border p-2 rounded w-full"
           placeholder="Water in days"
+          type="number"
+          min="1"
           value={waterIn}
           onChange={(e) => setWaterIn(e.target.value)}
         />
@@ -207,18 +224,54 @@ export default function Plants() {
           />
         )}
 
-        <label htmlFor="imageUpload" className="bg-gray-200 px-3 py-2 rounded cursor-pointer">
+        <label htmlFor="imageUpload" className="bg-gray-200 px-3 py-2 rounded cursor-pointer whitespace-nowrap">
           📷 Image
         </label>
 
-        <button onClick={addPlant} disabled={adding} className="bg-green-500 text-white px-4 rounded">
+        <button onClick={addPlant} disabled={adding} className="bg-green-500 text-white px-4 rounded whitespace-nowrap">
           {adding ? "Adding..." : "Add"}
         </button>
       </div>
 
+      {/* SEARCH & SORT */}
+      <div className="flex flex-col sm:flex-row gap-3 mb-6">
+        <input
+          className="border p-2 rounded w-full bg-white text-gray-800 placeholder-gray-400"
+          placeholder="🔍 Search plants..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
+
+        <select
+          className="border p-2 rounded bg-white text-gray-800 sm:w-48"
+          value={sortBy}
+          onChange={(e) => setSortBy(e.target.value)}
+        >
+          <option value="newest">Sort: Newest</option>
+          <option value="name-asc">Name A → Z</option>
+          <option value="name-desc">Name Z → A</option>
+          <option value="water-asc">Water: Soonest</option>
+          <option value="water-desc">Water: Latest</option>
+        </select>
+      </div>
+
+      {/* EMPTY STATE */}
+      {plants.length === 0 && (
+        <div className="text-center py-16 text-gray-400">
+          <p className="text-5xl mb-3">🪴</p>
+          <p className="text-lg">No plants yet. Add your first plant above!</p>
+        </div>
+      )}
+
+      {filtered.length === 0 && plants.length > 0 && (
+        <div className="text-center py-10 text-gray-400">
+          <p>No plants match "{search}"</p>
+        </div>
+      )}
+
       {/* LIST */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-        {plants.map((plant) => (
+        {filtered.map((plant) => (
           <div key={plant._id} className="bg-white rounded-xl shadow overflow-hidden">
             <div className="h-48 bg-gray-100">
               <img
@@ -234,14 +287,16 @@ export default function Plants() {
             </div>
 
             <div className="p-4">
-              <h3>{plant.name}</h3>
-              <p>💧 {plant.waterIn} days</p>
+              <h3 className="font-medium text-gray-800 truncate">{plant.name}</h3>
+              <p className={`text-sm mt-1 ${Number(plant.waterIn) <= 1 ? "text-red-500 font-semibold" : "text-gray-500"}`}>
+                💧 {Number(plant.waterIn) <= 1 ? "Water today!" : `${plant.waterIn} days`}
+              </p>
 
               <div className="flex justify-between mt-3">
-                <button onClick={() => setEditPlant(plant)} className="text-blue-500">
+                <button onClick={() => setEditPlant(plant)} className="text-blue-500 text-sm">
                   Edit
                 </button>
-                <button onClick={() => deletePlant(plant._id)} className="text-red-500">
+                <button onClick={() => deletePlant(plant._id)} className="text-red-500 text-sm">
                   Delete
                 </button>
               </div>
@@ -253,65 +308,59 @@ export default function Plants() {
       {/* EDIT MODAL */}
       {editPlant && (
         <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center">
-    <div className="bg-white text-black p-6 rounded-xl w-96 shadow-2xl">
+          <div className="bg-white text-black p-6 rounded-xl w-96 shadow-2xl">
 
-      <h3 className="mb-4 font-semibold text-black">
-        Edit Plant
-      </h3>
+            <h3 className="mb-4 font-semibold text-black">Edit Plant</h3>
 
-      <input
-        className="border p-2 w-full mb-2 text-black bg-white placeholder-gray-500"
-        value={editPlant.name}
-        onChange={(e) =>
-          setEditPlant({ ...editPlant, name: e.target.value })
-        }
-      />
+            <input
+              className="border p-2 w-full mb-2 text-black bg-white placeholder-gray-500"
+              value={editPlant.name}
+              onChange={(e) => setEditPlant({ ...editPlant, name: e.target.value })}
+            />
 
-      <input
-        className="border p-2 w-full mb-2 text-black bg-white placeholder-gray-500"
-        value={editPlant.waterIn}
-        onChange={(e) =>
-          setEditPlant({ ...editPlant, waterIn: e.target.value })
-        }
-      />
+            <input
+              className="border p-2 w-full mb-2 text-black bg-white placeholder-gray-500"
+              type="number"
+              min="1"
+              value={editPlant.waterIn}
+              onChange={(e) => setEditPlant({ ...editPlant, waterIn: e.target.value })}
+            />
 
-      {/* IMAGE INPUT (FIXED BELOW 👇) */}
+            <div className="mt-2">
+              <label className="block text-sm font-medium text-black mb-1">
+                Change Image
+              </label>
 
-      <div className="mt-2">
-        <label className="block text-sm font-medium text-black mb-1">
-          Change Image
-        </label>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) => setEditImage(e.target.files[0])}
+                className="block w-full text-sm text-black border p-2 rounded bg-white"
+              />
+            </div>
 
-        <input
-          type="file"
-          accept="image/*"
-          onChange={(e) => setEditImage(e.target.files[0])}
-          className="block w-full text-sm text-black border p-2 rounded bg-white"
-        />
-      </div>
+            {editImage && (
+              <img
+                src={URL.createObjectURL(editImage)}
+                className="w-20 h-20 mt-3 rounded object-cover"
+              />
+            )}
 
-      {editImage && (
-        <img
-          src={URL.createObjectURL(editImage)}
-          className="w-20 h-20 mt-3 rounded object-cover"
-        />
-      )}
+            <div className="flex justify-between mt-4">
+              <button
+                onClick={updatePlant}
+                className="bg-green-500 text-white px-4 py-1 rounded"
+              >
+                Save
+              </button>
 
-      <div className="flex justify-between mt-4">
-        <button
-          onClick={updatePlant}
-          className="bg-green-500 text-white px-4 py-1 rounded"
-        >
-          Save
-        </button>
-
-        <button
-          onClick={() => setEditPlant(null)}
-          className="text-red-500"
-        >
-          Cancel
-        </button>
-      </div>
+              <button
+                onClick={() => setEditPlant(null)}
+                className="text-red-500"
+              >
+                Cancel
+              </button>
+            </div>
           </div>
         </div>
       )}

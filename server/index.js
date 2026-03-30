@@ -7,6 +7,7 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import http from "http";
 import { Server } from "socket.io";
+import cron from "node-cron";
 import Notification from "./models/Notification.js";
 import User from "./models/User.js";
 import upload from "./middleware/upload.js";
@@ -44,7 +45,6 @@ app.use(
     origin: [
       "http://localhost:5173",
       "https://plant-care-app-zefq.vercel.app"
-     //"https://plant-care-plum-ten.vercel.app",
     ],
     credentials: true,
   })
@@ -134,6 +134,49 @@ const authMiddleware = (req, res, next) => {
   }
 };
 
+// ================= USER =================
+
+// GET current user info
+app.get("/api/user", authMiddleware, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id).select("-password");
+    if (!user) return res.status(404).json({ message: "User not found" });
+    res.json(user);
+  } catch {
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+// Change password
+app.put("/api/user/password", authMiddleware, async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({ message: "Both passwords required" });
+    }
+
+    if (newPassword.length < 6) {
+      return res.status(400).json({ message: "New password must be at least 6 characters" });
+    }
+
+    const user = await User.findById(req.user.id);
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    const isMatch = await bcrypt.compare(currentPassword, user.password);
+    if (!isMatch) {
+      return res.status(400).json({ message: "Current password is incorrect" });
+    }
+
+    user.password = await bcrypt.hash(newPassword, 10);
+    await user.save();
+
+    res.json({ message: "Password updated successfully" });
+  } catch {
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
 // ================= PLANTS =================
 
 // GET plants
@@ -149,14 +192,11 @@ app.get("/api/plants", authMiddleware, async (req, res) => {
 // ADD plant
 app.post("/api/plants", authMiddleware, upload.single("image"), async (req, res) => {
   try {
-    console.log("FILE:", req.file); // debug
     const plant = await Plant.create({
       userId: req.user.id,
       name: req.body.name,
       waterIn: req.body.waterIn,
-     image: req.file
-  ? `https://plant-care-app-fyh5.onrender.com/${req.file.path}`
-  : null,// ✅ important
+      image: req.file ? req.file.path : null,
     });
 
     // 🔥 REAL-TIME EMIT
@@ -203,13 +243,12 @@ app.delete("/api/plants/:id", authMiddleware, async (req, res) => {
 // UPDATE plant
 app.put("/api/plants/:id", authMiddleware, upload.single("image"), async (req, res) => {
   try {
-    const updateData = {
-        ...req.body,
-      };
+    const updateData = { ...req.body };
 
-      if (req.file) {
-        updateData.image = req.file.path;
-      }
+    if (req.file) {
+      updateData.image = req.file.path;
+    }
+
     const updated = await Plant.findByIdAndUpdate(
       req.params.id,
       updateData,
@@ -227,22 +266,57 @@ app.put("/api/plants/:id", authMiddleware, upload.single("image"), async (req, r
 // GET notifications
 app.get("/api/notifications", async (req, res) => {
   try {
-    const data = await Notification.find().sort({ createdAt: -1 });
+    const data = await Notification.find().sort({ createdAt: -1 }).limit(50);
     res.json(data);
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
 });
 
-// mark as read
+// Mark single notification as read
 app.put("/api/notifications/:id", async (req, res) => {
   try {
-    await Notification.findByIdAndUpdate(req.params.id, {
-      read: true,
-    });
+    await Notification.findByIdAndUpdate(req.params.id, { read: true });
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ message: err.message });
+  }
+});
+
+// Mark all notifications as read
+app.put("/api/notifications", async (req, res) => {
+  try {
+    await Notification.updateMany({ read: false }, { read: true });
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// ================= CRON: WATERING REMINDERS =================
+// Runs every day at 8:00 AM
+cron.schedule("0 8 * * *", async () => {
+  try {
+    const plants = await Plant.find({ waterIn: { $lte: "1" } });
+
+    // Group by userId to avoid duplicate notifications per user
+    const userIds = [...new Set(plants.map((p) => p.userId))];
+
+    for (const userId of userIds) {
+      const userPlants = plants.filter((p) => p.userId === userId);
+      const names = userPlants.map((p) => p.name).join(", ");
+
+      const notification = await Notification.create({
+        message: `💧 Time to water: ${names}`,
+        read: false,
+      });
+
+      io.emit("notification", notification);
+    }
+
+    console.log(`💧 Watering reminders sent for ${plants.length} plant(s)`);
+  } catch (err) {
+    console.error("Cron error:", err);
   }
 });
 

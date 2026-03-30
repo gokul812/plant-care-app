@@ -1,5 +1,26 @@
 {
   "dependencies": {
-    "mongodb": "^7.1.1"
-  }
+    "@anthropic-ai/sdk": "^0.80.0",
+    "mongodb": "^7.1.1",
+    "readline-sync": "^1.4.10"
+  },
+  "name": "plant-care-app",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/gokul812/plant-care-app.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/gokul812/plant-care-app/issues"
+  },
+  "homepage": "https://github.com/gokul812/plant-care-app#readme"
 }
